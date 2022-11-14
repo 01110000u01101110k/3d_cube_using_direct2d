@@ -1,0 +1,55 @@
+use windows::{core::*, Win32::System::Com::*};
+use crate::engine_core::win::{Window};
+use crate::shapes::{Cube, Shape};
+
+pub enum Statuses {
+    Waiting,
+    Runed,
+    Paused
+}
+
+pub struct Engine {
+    window_state: Window,
+    status: Statuses,
+    fps: i32,
+    cubes: Vec<Cube>
+}
+
+impl Engine {
+    pub fn new() -> Self {
+        Self {
+            window_state: Window::new().unwrap(),
+            status: Statuses::Waiting,
+            fps: 0,
+            cubes: Vec::new()
+        }
+    }
+
+    pub fn build_cube(
+        &mut self, 
+        cube: Cube
+    ) -> &mut Self {
+        match self.status {
+            Statuses::Waiting | Statuses::Paused => {
+                self.cubes.push(cube);
+                self
+            },
+            Statuses::Runed => panic!("
+                'run()' need called in end of functions from Engine.
+                for example: Engine::new().build_cube(your_cube)).run();
+            "),
+        }
+    }
+
+    pub fn run(&mut self) -> Result<()> {
+        unsafe {
+            CoInitializeEx(std::ptr::null(), COINIT_MULTITHREADED)?;
+        }
+
+        let mut window = self.window_state.clone();
+
+        self.status = Statuses::Runed;
+
+        window.run()
+    }
+}
