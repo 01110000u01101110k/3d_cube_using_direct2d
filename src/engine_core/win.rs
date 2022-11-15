@@ -376,6 +376,60 @@ impl Window {
 
             loop {
                 if self.visible {
+                    if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(87) | windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(38)
+                    == (1 | -32767 | -32768)
+                    {
+                        //Up
+
+                        for cube in &mut self.cubes {
+                            cube.middle_dot_y += 2.0;
+                        }
+
+                        /*&mutself.cubes.iter().for_each(|&mut cube| {
+                            cube.middle_dot_y += 1.0;
+                        });*/
+                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(83) | windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(40)
+                        == (1 | -32767 | -32768)
+                    {
+                        //Down
+
+                        for cube in &mut self.cubes {
+                            cube.middle_dot_y -= 2.0;
+                        }
+                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(65) | windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(37)
+                        == (1 | -32767 | -32768)
+                    {
+                        //Left
+
+                        for cube in &mut self.cubes {
+                            cube.middle_dot_x -= 2.0;
+                        }
+                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(68) | windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(39)
+                        == (1 | -32767 | -32768)
+                    {
+                        //Right
+
+                        for cube in &mut self.cubes {
+                            cube.middle_dot_x += 2.0;
+                        }
+                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(13)
+                        == (1 | -32767 | -32768)
+                    {
+                        //Enter
+
+                        for cube in &mut self.cubes {
+                            cube.middle_dot_z += 2.0;
+                        }
+                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(32) | windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(27)
+                        == (1 | -32767 | -32768)
+                    {
+                        //Space
+
+                        for cube in &mut self.cubes {
+                            cube.middle_dot_z -= 2.0;
+                        }
+                    }
+
                     self.render()?;
 
                     while PeekMessageA(&mut message, None, 0, 0, PM_REMOVE).into() {
