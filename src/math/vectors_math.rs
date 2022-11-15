@@ -8,8 +8,8 @@ pub fn transoformate_3d_vector_to_2d(
 
     let deph = BASE_3D_DEPH / (BASE_3D_DEPH + vector_3d.z);
 
-    new_2d_vector.x *= deph;
-    new_2d_vector.x *= deph;
+    new_2d_vector.x = vector_3d.x * deph;
+    new_2d_vector.y = vector_3d.y * deph;
 
     new_2d_vector
 }

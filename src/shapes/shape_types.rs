@@ -11,5 +11,5 @@ pub enum Shapes {
 pub trait Shape {
     fn new() -> Self;
 
-    fn build_shape(&self, window: Window);
+    fn build_shape(&self, window: &Window);
 }

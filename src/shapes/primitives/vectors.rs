@@ -1,8 +1,10 @@
+#[derive(Debug)]
 pub struct VectorPoint2D {
     pub x: f32,
     pub y: f32,
 }
 
+#[derive(Debug)]
 pub struct VectorPoint3D {
     pub x: f32,
     pub y: f32,

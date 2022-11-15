@@ -2,14 +2,15 @@ use windows::{core::*, Win32::System::Com::*};
 use crate::engine_core::win::{Window};
 use crate::shapes::{Cube, Shape};
 
+#[derive(Clone)]
 pub enum Statuses {
     Waiting,
     Runed,
     Paused
 }
 
+#[derive(Clone)]
 pub struct Engine {
-    window_state: Window,
     status: Statuses,
     fps: i32,
     cubes: Vec<Cube>
@@ -18,7 +19,6 @@ pub struct Engine {
 impl Engine {
     pub fn new() -> Self {
         Self {
-            window_state: Window::new().unwrap(),
             status: Statuses::Waiting,
             fps: 0,
             cubes: Vec::new()
@@ -46,10 +46,10 @@ impl Engine {
             CoInitializeEx(std::ptr::null(), COINIT_MULTITHREADED)?;
         }
 
-        let mut window = self.window_state.clone();
+        let mut window = Window::new()?;
 
         self.status = Statuses::Runed;
 
-        window.run()
+        window.run(self.cubes.clone())
     }
 }

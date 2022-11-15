@@ -1,4 +1,5 @@
 use windows::{core::*, Foundation::Numerics::*, Win32::Foundation::*, Win32::Graphics::Direct2D::Common::*, Win32::Graphics::Direct2D::*, Win32::Graphics::Direct3D::*, Win32::Graphics::Direct3D11::*, Win32::Graphics::Dxgi::Common::*, Win32::Graphics::Dxgi::*, Win32::Graphics::Gdi::*, Win32::System::Com::*, Win32::System::LibraryLoader::*, Win32::System::Performance::*, Win32::System::SystemInformation::GetLocalTime, Win32::UI::Animation::*, Win32::UI::WindowsAndMessaging::*};
+use crate::shapes::{Cube};
 
 fn create_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush> {
     let color = D2D1_COLOR_F { r: 0.9, g: 0.8, b: 0.1, a: 1.0 };
@@ -123,12 +124,11 @@ unsafe fn GetWindowLong(window: HWND, index: WINDOW_LONG_PTR_INDEX) -> isize {
     GetWindowLongPtrA(window, index)
 }
 
-#[derive(Clone)]
 pub struct Window {
     handle: HWND,
     factory: ID2D1Factory1,
     dxfactory: IDXGIFactory2,
-    style: ID2D1StrokeStyle,
+    pub style: ID2D1StrokeStyle,
 
     pub target: Option<ID2D1DeviceContext>,
     swapchain: Option<IDXGISwapChain1>,
@@ -137,6 +137,7 @@ pub struct Window {
     dpi: f32,
     visible: bool,
     occlusion: u32,
+    cubes: Vec<Cube>
 }
 
 impl Window {
@@ -161,6 +162,7 @@ impl Window {
             dpi,
             visible: false,
             occlusion: 0,
+            cubes: Vec::new()
         })
     }
 
@@ -238,16 +240,25 @@ impl Window {
     }
 
     fn draw_elements(&self) -> Result<()> {
-        let target = self.target.as_ref().unwrap();
+        self.cubes.iter().for_each(|cube| {
+            cube.build_shape(&self);
+        });
+
+        /*let target = self.target.as_ref().unwrap();
         let brush = self.brush.as_ref().unwrap();
 
-        /*let mut rect = D2D_RECT_F::default();
-        
         unsafe {
-            target.FillRectangle(&rect, brush);
-        };*/
-
-        
+            target.DrawLine(
+                D2D_POINT_2F::default(),
+                D2D_POINT_2F {
+                    x: 0.0,
+                    y: 10.0,
+                },
+                brush,
+                20.0,
+                &self.style,
+            );
+        }*/
 
         Ok(())
     }
@@ -335,7 +346,7 @@ impl Window {
         }
     }
 
-    pub fn run(&mut self) -> Result<()> {
+    pub fn run(&mut self, cubes: Vec<Cube>) -> Result<()> {
         unsafe {
             let instance = GetModuleHandleA(None)?;
             debug_assert!(instance.0 != 0);
@@ -359,6 +370,9 @@ impl Window {
             debug_assert!(handle.0 != 0);
             debug_assert!(handle == self.handle);
             let mut message = MSG::default();
+
+            // add cubes
+            self.cubes = cubes;
 
             loop {
                 if self.visible {
