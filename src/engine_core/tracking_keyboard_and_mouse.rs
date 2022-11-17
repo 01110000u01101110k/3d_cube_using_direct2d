@@ -1,0 +1,1 @@
+pub struct LastPressKey(pub i32);

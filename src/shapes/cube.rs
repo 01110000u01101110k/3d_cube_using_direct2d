@@ -1,44 +1,22 @@
-use windows::{core::*, Foundation::Numerics::*, Win32::Foundation::*, Win32::Graphics::Direct2D::Common::*, Win32::Graphics::Direct2D::*, Win32::Graphics::Direct3D::*, Win32::Graphics::Direct3D11::*, Win32::Graphics::Dxgi::Common::*, Win32::Graphics::Dxgi::*, Win32::Graphics::Gdi::*, Win32::System::Com::*, Win32::System::LibraryLoader::*, Win32::System::Performance::*, Win32::System::SystemInformation::GetLocalTime, Win32::UI::Animation::*, Win32::UI::WindowsAndMessaging::*};
+use windows::{Win32::Graphics::Direct2D::Common::*};
 
 use crate::engine_core::{Window};
 use crate::shapes::primitives::{VectorPoint3D, VectorPoint2D};
-use crate::shapes::{Shape};
-use crate::math::{transoformate_3d_vector_to_2d, from_cartesian_to_screen_coordinates};
+use crate::math::{
+    transoformate_3d_vector_to_2d_screen_vector, 
+    from_cartesian_to_screen_coordinates,
+    Rotatin
+};
 
 #[derive(Clone, Debug)]
-pub struct Cube {
-    pub middle_dot_x: f32,
-    pub middle_dot_y: f32,
-    pub middle_dot_z: f32,
-    pub size: f32
+pub struct BuildedCube {
+    pub points: Vec<VectorPoint3D>,
+    pub is_builded: bool
 }
 
-impl Cube {
-    pub fn set_cube_info(&self, new_cube: Cube) -> Self {
-        Self {
-            middle_dot_x: new_cube.middle_dot_x,
-            middle_dot_y: new_cube.middle_dot_y,
-            middle_dot_z: new_cube.middle_dot_z,
-            size: new_cube.size,
-        }
-    }
-}
-
-impl Cube {
+impl BuildedCube {
     pub fn new() -> Self {
-        Self {
-            middle_dot_x: 0.0,
-            middle_dot_y: 0.0,
-            middle_dot_z: 0.0,
-            size: 0.0
-        }
-    }
-
-    pub fn build_shape(&self, window: &Window) {
-        let target = window.target.as_ref().unwrap();
-        let brush = window.brush.as_ref().unwrap();
-
-        let mut cube: Vec<VectorPoint3D> = vec![
+        let points: Vec<VectorPoint3D> = vec![
             VectorPoint3D::new(),
             VectorPoint3D::new(),
             VectorPoint3D::new(),
@@ -49,51 +27,141 @@ impl Cube {
             VectorPoint3D::new(),
         ];
 
-        cube[0].x = self.middle_dot_x - (self.size * 7.0);
-        cube[0].y = self.middle_dot_y + (self.size * 7.0);
-        cube[0].z = self.middle_dot_z - self.size;
+        Self {
+            points,
+            is_builded: false
+        }
+    }
+}
 
-        cube[1].x = self.middle_dot_x + (self.size * 7.0);
-        cube[1].y = self.middle_dot_y + (self.size * 7.0);
-        cube[1].z = self.middle_dot_z - self.size;
+#[derive(Clone, Debug)]
+pub struct Cube {
+    pub middle_dot_x: f32,
+    pub middle_dot_y: f32,
+    pub middle_dot_z: f32,
+    pub size: f32,
+    pub rotation: Rotatin,
+    pub builded_cube: BuildedCube,
+    pub to_draw: Vec<VectorPoint3D>,
+}
 
-        cube[2].x = self.middle_dot_x - (self.size * 7.0);
-        cube[2].y = self.middle_dot_y - (self.size * 7.0);
-        cube[2].z = self.middle_dot_z - self.size;
+impl Cube {
+    pub fn set_cube_info(&self, new_cube: Cube) -> Self {
+        Self {
+            middle_dot_x: new_cube.middle_dot_x,
+            middle_dot_y: new_cube.middle_dot_y,
+            middle_dot_z: new_cube.middle_dot_z,
+            size: new_cube.size,
+            rotation: new_cube.rotation,
+            builded_cube: new_cube.builded_cube,
+            to_draw: new_cube.to_draw
+        }
+    }
+}
 
-        cube[3].x = self.middle_dot_x + (self.size * 7.0);
-        cube[3].y = self.middle_dot_y - (self.size * 7.0);
-        cube[3].z = self.middle_dot_z - self.size;
+impl Cube {
+    pub fn new() -> Self {
+        Self {
+            middle_dot_x: 0.0,
+            middle_dot_y: 0.0,
+            middle_dot_z: 0.0,
+            size: 0.0,
+            rotation: Rotatin::new(),
+            builded_cube: BuildedCube::new(),
+            to_draw: Vec::new()
+        }
+    }
 
-        cube[4].x = self.middle_dot_x - (self.size * 7.0);
-        cube[4].y = self.middle_dot_y + (self.size * 7.0);
-        cube[4].z = self.middle_dot_z + self.size;
+    pub fn build_shape(&mut self) {
+        if !self.builded_cube.is_builded {
+            self.build_cube_from_middle_points();
+        }
 
-        cube[5].x = self.middle_dot_x + (self.size * 7.0);
-        cube[5].y = self.middle_dot_y + (self.size * 7.0);
-        cube[5].z = self.middle_dot_z + self.size;
+        let mut builded_cube = self.builded_cube.clone();
 
-        cube[6].x = self.middle_dot_x - (self.size * 7.0);
-        cube[6].y = self.middle_dot_y - (self.size * 7.0);
-        cube[6].z = self.middle_dot_z + self.size;
+        if self.rotation.is_need_rotate == true {
+            //self.rotation.iner_deley_counter += 1.0;
+            
+            //if self.rotation.iner_deley_counter == self.rotation.deley_rotate_ms {
 
-        cube[7].x = self.middle_dot_x + (self.size * 7.0);
-        cube[7].y = self.middle_dot_y - (self.size * 7.0);
-        cube[7].z = self.middle_dot_z + self.size;
+                //self.rotation.iner_deley_counter = 0.0;
 
-        let mut cube_2d_proection_on_screen: Vec<VectorPoint2D> = Vec::new();
+                let roatate_degree = 0.01;
 
-        cube.iter().for_each(|vector| {
-            let vector_2d_proection_on_screen = transoformate_3d_vector_to_2d(vector);
+                if self.rotation.rotate_directions.rotate_by_x {
+                    self.rotation.rotation_by_x(roatate_degree);
+                }
+                if self.rotation.rotate_directions.rotate_by_y {
+                    self.rotation.rotation_by_y(roatate_degree);
+                }
+                if self.rotation.rotate_directions.rotate_by_z {
+                    self.rotation.rotation_by_z(roatate_degree);
+                }
+                
+                self.rotation.rotate_shape(&mut builded_cube);
+            //}
+        }
 
-            let mut result_vector = from_cartesian_to_screen_coordinates(
-                vector_2d_proection_on_screen, 
-                1920.0, 
-                1080.0
+        let mut cube_2d_proection_on_screen: Vec<VectorPoint3D> = Vec::new();
+
+        builded_cube.points.iter().for_each(|vector| {
+            let vector_2d_proection_on_screen = transoformate_3d_vector_to_2d_screen_vector(vector);
+
+            let result_vector = from_cartesian_to_screen_coordinates(
+                &vector_2d_proection_on_screen, 
+                /*1920.0, 
+                1080.0*/
+                1705.0, 
+                880.0
             );
             
             cube_2d_proection_on_screen.push(result_vector);
         });
+
+        self.to_draw = cube_2d_proection_on_screen;
+    }
+
+    fn build_cube_from_middle_points(&mut self) -> &mut Self {
+        self.builded_cube.points[0].x = self.middle_dot_x - (self.size / 2.0);
+        self.builded_cube.points[0].y = self.middle_dot_y + (self.size / 2.0);
+        self.builded_cube.points[0].z = self.middle_dot_z - (self.size / 2.0);
+
+        self.builded_cube.points[1].x = self.middle_dot_x + (self.size / 2.0);
+        self.builded_cube.points[1].y = self.middle_dot_y + (self.size / 2.0);
+        self.builded_cube.points[1].z = self.middle_dot_z - (self.size / 2.0);
+
+        self.builded_cube.points[2].x = self.middle_dot_x - (self.size / 2.0);
+        self.builded_cube.points[2].y = self.middle_dot_y - (self.size / 2.0);
+        self.builded_cube.points[2].z = self.middle_dot_z - (self.size / 2.0);
+
+        self.builded_cube.points[3].x = self.middle_dot_x + (self.size / 2.0);
+        self.builded_cube.points[3].y = self.middle_dot_y - (self.size / 2.0);
+        self.builded_cube.points[3].z = self.middle_dot_z - (self.size / 2.0);
+
+        self.builded_cube.points[4].x = self.middle_dot_x - (self.size / 2.0);
+        self.builded_cube.points[4].y = self.middle_dot_y + (self.size / 2.0);
+        self.builded_cube.points[4].z = self.middle_dot_z + (self.size / 2.0);
+
+        self.builded_cube.points[5].x = self.middle_dot_x + (self.size / 2.0);
+        self.builded_cube.points[5].y = self.middle_dot_y + (self.size / 2.0);
+        self.builded_cube.points[5].z = self.middle_dot_z + (self.size / 2.0);
+
+        self.builded_cube.points[6].x = self.middle_dot_x - (self.size / 2.0);
+        self.builded_cube.points[6].y = self.middle_dot_y - (self.size / 2.0);
+        self.builded_cube.points[6].z = self.middle_dot_z + (self.size / 2.0);
+
+        self.builded_cube.points[7].x = self.middle_dot_x + (self.size / 2.0);
+        self.builded_cube.points[7].y = self.middle_dot_y - (self.size / 2.0);
+        self.builded_cube.points[7].z = self.middle_dot_z + (self.size / 2.0);
+
+        self.builded_cube.is_builded = true;
+
+        self
+    }
+
+    pub fn draw_cube(&self, window: &Window) {
+        let target = window.target.as_ref().unwrap();
+        let brush = window.brush.as_ref().unwrap();
 
         /*
         які точки повинні бути зєднані:
@@ -115,57 +183,57 @@ impl Cube {
             // 1
             target.DrawLine(
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[0].x,
-                    y: cube_2d_proection_on_screen[0].y,
+                    x: self.to_draw[0].x,
+                    y: self.to_draw[0].y,
                 },
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[1].x,
-                    y: cube_2d_proection_on_screen[1].y,
+                    x: self.to_draw[1].x,
+                    y: self.to_draw[1].y,
                 },
                 brush,
-                1.0,
+                4.0,
                 &window.style,
             );
 
             target.DrawLine(
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[1].x,
-                    y: cube_2d_proection_on_screen[1].y,
+                    x: self.to_draw[1].x,
+                    y: self.to_draw[1].y,
                 },
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[3].x,
-                    y: cube_2d_proection_on_screen[3].y,
+                    x: self.to_draw[3].x,
+                    y: self.to_draw[3].y,
                 },
                 brush,
-                1.0,
+                4.0,
                 &window.style,
             );
 
             target.DrawLine(
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[3].x,
-                    y: cube_2d_proection_on_screen[3].y,
+                    x: self.to_draw[3].x,
+                    y: self.to_draw[3].y,
                 },
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[2].x,
-                    y: cube_2d_proection_on_screen[2].y,
+                    x: self.to_draw[2].x,
+                    y: self.to_draw[2].y,
                 },
                 brush,
-                1.0,
+                4.0,
                 &window.style,
             );
 
             target.DrawLine(
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[2].x,
-                    y: cube_2d_proection_on_screen[2].y,
+                    x: self.to_draw[2].x,
+                    y: self.to_draw[2].y,
                 },
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[0].x,
-                    y: cube_2d_proection_on_screen[0].y,
+                    x: self.to_draw[0].x,
+                    y: self.to_draw[0].y,
                 },
                 brush,
-                1.0,
+                4.0,
                 &window.style,
             );
 
@@ -173,57 +241,57 @@ impl Cube {
 
             target.DrawLine(
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[4].x,
-                    y: cube_2d_proection_on_screen[4].y,
+                    x: self.to_draw[4].x,
+                    y: self.to_draw[4].y,
                 },
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[5].x,
-                    y: cube_2d_proection_on_screen[5].y,
+                    x: self.to_draw[5].x,
+                    y: self.to_draw[5].y,
                 },
                 brush,
-                1.0,
+                4.0,
                 &window.style,
             );
 
             target.DrawLine(
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[5].x,
-                    y: cube_2d_proection_on_screen[5].y,
+                    x: self.to_draw[5].x,
+                    y: self.to_draw[5].y,
                 },
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[7].x,
-                    y: cube_2d_proection_on_screen[7].y,
+                    x: self.to_draw[7].x,
+                    y: self.to_draw[7].y,
                 },
                 brush,
-                1.0,
+                4.0,
                 &window.style,
             );
 
             target.DrawLine(
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[7].x,
-                    y: cube_2d_proection_on_screen[7].y,
+                    x: self.to_draw[7].x,
+                    y: self.to_draw[7].y,
                 },
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[6].x,
-                    y: cube_2d_proection_on_screen[6].y,
+                    x: self.to_draw[6].x,
+                    y: self.to_draw[6].y,
                 },
                 brush,
-                1.0,
+                4.0,
                 &window.style,
             );
 
             target.DrawLine(
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[6].x,
-                    y: cube_2d_proection_on_screen[6].y,
+                    x: self.to_draw[6].x,
+                    y: self.to_draw[6].y,
                 },
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[4].x,
-                    y: cube_2d_proection_on_screen[4].y,
+                    x: self.to_draw[4].x,
+                    y: self.to_draw[4].y,
                 },
                 brush,
-                1.0,
+                4.0,
                 &window.style,
             );
 
@@ -231,15 +299,15 @@ impl Cube {
 
             target.DrawLine(
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[0].x,
-                    y: cube_2d_proection_on_screen[0].y,
+                    x: self.to_draw[0].x,
+                    y: self.to_draw[0].y,
                 },
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[4].x,
-                    y: cube_2d_proection_on_screen[4].y,
+                    x: self.to_draw[4].x,
+                    y: self.to_draw[4].y,
                 },
                 brush,
-                1.0,
+                4.0,
                 &window.style,
             );
 
@@ -247,15 +315,15 @@ impl Cube {
 
             target.DrawLine(
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[1].x,
-                    y: cube_2d_proection_on_screen[1].y,
+                    x: self.to_draw[1].x,
+                    y: self.to_draw[1].y,
                 },
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[5].x,
-                    y: cube_2d_proection_on_screen[5].y,
+                    x: self.to_draw[5].x,
+                    y: self.to_draw[5].y,
                 },
                 brush,
-                1.0,
+                4.0,
                 &window.style,
             );
 
@@ -263,15 +331,15 @@ impl Cube {
 
             target.DrawLine(
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[2].x,
-                    y: cube_2d_proection_on_screen[2].y,
+                    x: self.to_draw[2].x,
+                    y: self.to_draw[2].y,
                 },
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[6].x,
-                    y: cube_2d_proection_on_screen[6].y,
+                    x: self.to_draw[6].x,
+                    y: self.to_draw[6].y,
                 },
                 brush,
-                1.0,
+                4.0,
                 &window.style,
             );
 
@@ -279,17 +347,17 @@ impl Cube {
 
             target.DrawLine(
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[3].x,
-                    y: cube_2d_proection_on_screen[3].y,
+                    x: self.to_draw[3].x,
+                    y: self.to_draw[3].y,
                 },
                 D2D_POINT_2F {
-                    x: cube_2d_proection_on_screen[7].x,
-                    y: cube_2d_proection_on_screen[7].y,
+                    x: self.to_draw[7].x,
+                    y: self.to_draw[7].y,
                 },
                 brush,
-                1.0,
+                4.0,
                 &window.style,
             );
-        }
+        }            
     }
 }

@@ -1,1 +1,1 @@
-pub const BASE_3D_DEPH: f32 = 25.0;
+pub const BASE_3D_DEPH: f32 = 900.0;
