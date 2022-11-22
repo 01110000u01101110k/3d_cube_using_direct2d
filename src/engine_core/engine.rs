@@ -2,14 +2,12 @@ use windows::{core::*, Win32::System::Com::*};
 use crate::engine_core::win::{Window};
 use crate::shapes::{Cube, Shape};
 
-#[derive(Clone)]
 pub enum Statuses {
     Waiting,
     Runed,
     Paused
 }
 
-#[derive(Clone)]
 pub struct Engine {
     status: Statuses,
     fps: i32,

@@ -10,6 +10,30 @@ fn create_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush> {
     unsafe { target.CreateSolidColorBrush(&color, &properties) }
 }
 
+fn create_red_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush> {
+    let color = D2D1_COLOR_F { r: 0.9, g: 0.1, b: 0.1, a: 1.0 };
+
+    let properties = D2D1_BRUSH_PROPERTIES { opacity: 0.8, transform: Matrix3x2::identity() };
+
+    unsafe { target.CreateSolidColorBrush(&color, &properties) }
+}
+
+fn create_green_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush> {
+    let color = D2D1_COLOR_F { r: 0.1, g: 0.9, b: 0.1, a: 1.0 };
+
+    let properties = D2D1_BRUSH_PROPERTIES { opacity: 0.8, transform: Matrix3x2::identity() };
+
+    unsafe { target.CreateSolidColorBrush(&color, &properties) }
+}
+
+fn create_blue_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush> {
+    let color = D2D1_COLOR_F { r: 0.1, g: 0.1, b: 0.9, a: 1.0 };
+
+    let properties = D2D1_BRUSH_PROPERTIES { opacity: 0.8, transform: Matrix3x2::identity() };
+
+    unsafe { target.CreateSolidColorBrush(&color, &properties) }
+}
+
 fn create_factory() -> Result<ID2D1Factory1> {
     let mut options = D2D1_FACTORY_OPTIONS::default();
 
@@ -134,6 +158,9 @@ pub struct Window {
     pub target: Option<ID2D1DeviceContext>,
     swapchain: Option<IDXGISwapChain1>,
     pub brush: Option<ID2D1SolidColorBrush>,
+    pub brush_red: Option<ID2D1SolidColorBrush>,
+    pub brush_green: Option<ID2D1SolidColorBrush>,
+    pub brush_blue: Option<ID2D1SolidColorBrush>,
     draw_space: Option<ID2D1Bitmap1>,
     dpi: f32,
     visible: bool,
@@ -160,6 +187,9 @@ impl Window {
             target: None,
             swapchain: None,
             brush: None,
+            brush_red: None,
+            brush_green: None,
+            brush_blue: None,
             draw_space: None,
             dpi,
             visible: false,
@@ -179,6 +209,9 @@ impl Window {
             create_swapchain_bitmap(&swapchain, &target)?;
 
             self.brush = create_brush(&target).ok();
+            self.brush_red = create_red_brush(&target).ok();
+            self.brush_green = create_green_brush(&target).ok();
+            self.brush_blue = create_blue_brush(&target).ok();
             self.target = Some(target);
             self.swapchain = Some(swapchain);
             self.create_device_size_resources()?;
@@ -399,7 +432,36 @@ impl Window {
                             cube.middle_dot_x += 20.0;
                             cube.builded_cube.is_builded = false;
                         }
-                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(13)
+                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(90)
+                        == (1 | -32767 | -32768)
+                    {
+                        //Z axis
+
+                        for cube in &mut self.cubes {
+                            cube.rotation.rotate_directions.rotate_by_z = !cube.rotation.rotate_directions.rotate_by_z;
+                            cube.builded_cube.is_builded = false;
+                        }
+                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(88)
+                        == (1 | -32767 | -32768)
+                    {
+                        //X axis
+
+                        for cube in &mut self.cubes {
+                            cube.rotation.rotate_directions.rotate_by_x = !cube.rotation.rotate_directions.rotate_by_x;
+                            cube.builded_cube.is_builded = false;
+                        }
+                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(89)
+                        == (1 | -32767 | -32768)
+                    {
+                        //Y axis
+
+                        for cube in &mut self.cubes {
+                            cube.rotation.rotate_directions.rotate_by_y = !cube.rotation.rotate_directions.rotate_by_y;
+                            cube.builded_cube.is_builded = false;
+                        }
+                    }
+                    
+                    else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(13)
                         == (1 | -32767 | -32768)
                     {
                         //Enter
@@ -433,9 +495,8 @@ impl Window {
                         }
                     }
                     
-
                     for cube in &mut self.cubes {
-                        cube.build_shape();
+                        cube.build_shape(self.handle);
                     }
 
                     self.render()?;

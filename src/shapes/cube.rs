@@ -1,6 +1,7 @@
-use windows::{Win32::Graphics::Direct2D::Common::*};
+use windows::{core::*, Foundation::Numerics::*, Win32::Foundation::*, Win32::Graphics::Direct2D::Common::*, Win32::Graphics::Direct2D::*, Win32::Graphics::Direct3D::*, Win32::Graphics::Direct3D11::*, Win32::Graphics::Dxgi::Common::*, Win32::Graphics::Dxgi::*, Win32::Graphics::Gdi::*, Win32::System::Com::*, Win32::System::LibraryLoader::*, Win32::System::Performance::*, Win32::System::SystemInformation::GetLocalTime, Win32::UI::Animation::*, Win32::UI::WindowsAndMessaging::*};
 
 use crate::engine_core::{Window};
+use crate::shapes::{CoordinateLines};
 use crate::shapes::primitives::{VectorPoint3D, VectorPoint2D};
 use crate::math::{
     transoformate_3d_vector_to_2d_screen_vector, 
@@ -72,19 +73,13 @@ impl Cube {
         }
     }
 
-    pub fn build_shape(&mut self) {
-        if !self.builded_cube.is_builded {
-            self.build_cube_from_middle_points();
-        }
-
-        let mut builded_cube = self.builded_cube.clone();
-
+    pub fn rotate_shape(&mut self, shape: &mut BuildedCube) {
         if self.rotation.is_need_rotate == true {
-            //self.rotation.iner_deley_counter += 1.0;
+            self.rotation.iner_deley_counter += 1.0;
             
-            //if self.rotation.iner_deley_counter == self.rotation.deley_rotate_ms {
+            if self.rotation.iner_deley_counter == self.rotation.deley_rotate_ms {
 
-                //self.rotation.iner_deley_counter = 0.0;
+                self.rotation.iner_deley_counter = 0.0;
 
                 let roatate_degree = 0.01;
 
@@ -98,23 +93,43 @@ impl Cube {
                     self.rotation.rotation_by_z(roatate_degree);
                 }
                 
-                self.rotation.rotate_shape(&mut builded_cube);
-            //}
+                self.rotation.rotate_shape(shape);
+            } else {
+                self.rotation.rotate_shape(shape);
+            }
         }
+    }
+
+    pub fn build_shape(&mut self, hwnd: HWND) {
+        if !self.builded_cube.is_builded {
+            self.build_cube_from_middle_points();
+        }
+
+        let mut rect_client_window = RECT::default();
+
+        unsafe {
+            GetClientRect(hwnd, &mut rect_client_window);
+        }
+
+        let mut builded_cube = self.builded_cube.clone();
+
+        self.rotate_shape(&mut builded_cube);
 
         let mut cube_2d_proection_on_screen: Vec<VectorPoint3D> = Vec::new();
 
         builded_cube.points.iter().for_each(|vector| {
-            let vector_2d_proection_on_screen = transoformate_3d_vector_to_2d_screen_vector(vector);
+            let vector_2d_proection_on_screen = transoformate_3d_vector_to_2d_screen_vector(
+                vector,
+                rect_client_window.right as f32,
+                rect_client_window.bottom as f32
+            );
 
             let result_vector = from_cartesian_to_screen_coordinates(
                 &vector_2d_proection_on_screen, 
-                /*1920.0, 
-                1080.0*/
-                1705.0, 
-                880.0
+                rect_client_window.right as f32,
+                rect_client_window.bottom as f32
             );
-            
+
             cube_2d_proection_on_screen.push(result_vector);
         });
 
@@ -359,5 +374,10 @@ impl Cube {
                 &window.style,
             );
         }            
+
+
+        // draw coordinate lines
+
+        //CoordinateLines::new().draw_coordinate_lines(&window, self.to_draw[0].x + (self.to_draw[0].x / 2.0), self.to_draw[0].y + (self.to_draw[0].y / 2.0));
     }
 }
