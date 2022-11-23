@@ -1,6 +1,6 @@
 use crate::shapes::{VectorPoint3D};
 
-pub fn transoformate_3d_vector_to_2d_screen_vector(
+pub fn transoformate_3d_vector_to_2d_screen(
     vector_3d: &VectorPoint3D,
     screen_width: f32, 
     screen_height: f32

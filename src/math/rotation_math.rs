@@ -1,6 +1,13 @@
 use crate::shapes::{VectorPoint3D, BuildedCube};
 
 #[derive(Clone, Debug)]
+pub enum RotationTypes {
+    AroundSelf,
+    AroundGlobalCoordinates,
+    None
+}
+
+#[derive(Clone, Debug)]
 pub struct RotateDirections {
     pub rotate_by_x: bool,
     pub rotate_by_y: bool,
@@ -40,6 +47,7 @@ pub struct Rotatin {
     pub degree: Degree,
     pub deley_rotate_ms: f32,
     pub iner_deley_counter: f32,
+    pub rotation_type: RotationTypes
 }
 
 impl Rotatin {
@@ -50,6 +58,7 @@ impl Rotatin {
             rotate_directions: RotateDirections::new(),
             deley_rotate_ms: 10.0,
             iner_deley_counter: 0.0,
+            rotation_type: RotationTypes::None
         }
     }
 

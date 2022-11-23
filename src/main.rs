@@ -3,7 +3,8 @@ use spinning_cube::shapes::{Cube, BuildedCube};
 use spinning_cube::math::{
     Degree,
     Rotatin,
-    RotateDirections
+    RotateDirections,
+    RotationTypes
 };
 
 fn main() {
@@ -23,6 +24,7 @@ fn main() {
             },
             deley_rotate_ms: 2.0,
             iner_deley_counter: 0.0,
+            rotation_type: RotationTypes::AroundSelf
         },
         builded_cube: BuildedCube::new(),
         to_draw: Vec::new()
