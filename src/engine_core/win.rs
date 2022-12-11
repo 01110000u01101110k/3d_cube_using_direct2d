@@ -1,6 +1,9 @@
 use windows::{core::*, Foundation::Numerics::*, Win32::Foundation::*, Win32::Graphics::Direct2D::Common::*, Win32::Graphics::Direct2D::*, Win32::Graphics::Direct3D::*, Win32::Graphics::Direct3D11::*, Win32::Graphics::Dxgi::Common::*, Win32::Graphics::Dxgi::*, Win32::Graphics::Gdi::*, Win32::System::Com::*, Win32::System::LibraryLoader::*, Win32::System::Performance::*, Win32::System::SystemInformation::GetLocalTime, Win32::UI::Animation::*, Win32::UI::WindowsAndMessaging::*};
 use crate::shapes::{Cube};
-use crate::engine_core::tracking_keyboard_and_mouse::{LastPressKey};
+use crate::engine_core::{LastPressKey};
+
+use std::time::{Duration, Instant};
+use std::io::{self, Write};
 
 fn create_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush> {
     let color = D2D1_COLOR_F { r: 0.9, g: 0.8, b: 0.1, a: 1.0 };
@@ -150,7 +153,7 @@ unsafe fn GetWindowLong(window: HWND, index: WINDOW_LONG_PTR_INDEX) -> isize {
 }
 
 pub struct Window {
-    handle: HWND,
+    pub handle: HWND,
     factory: ID2D1Factory1,
     dxfactory: IDXGIFactory2,
     pub style: ID2D1StrokeStyle,
@@ -195,7 +198,7 @@ impl Window {
             visible: false,
             occlusion: 0,
             cubes: Vec::new(),
-            last_press_key: LastPressKey(-1000)
+            last_press_key: LastPressKey::new()
         })
     }
 
@@ -263,11 +266,13 @@ impl Window {
             target.GetTarget(&mut previous);
             target.SetTarget(draw_space);
             target.Clear(std::ptr::null());
-            self.draw_elements()?;
-            target.SetTarget(previous.as_ref());
-            target.SetTransform(&Matrix3x2::translation(5.0, 5.0));
 
-            target.SetTransform(&Matrix3x2::identity());
+            self.draw_elements()?;
+
+            target.SetTarget(previous.as_ref());
+            /*target.SetTransform(&Matrix3x2::translation(5.0, 5.0));
+
+            target.SetTransform(&Matrix3x2::identity());*/
 
             target.DrawImage(draw_space, std::ptr::null(), std::ptr::null(), D2D1_INTERPOLATION_MODE_LINEAR, D2D1_COMPOSITE_MODE_SOURCE_OVER);
         }
@@ -277,7 +282,8 @@ impl Window {
 
     fn draw_elements(&self) -> Result<()> {
         self.cubes.iter().for_each(|cube| {
-            cube.draw_cube(&self);
+            cube.draw_cube_from_triangles(&self);
+            
         });
         
         Ok(())
@@ -394,112 +400,44 @@ impl Window {
             // add cubes
             self.cubes = cubes;
 
+            let stdout = io::stdout();
+
+            let mut frame_time_render: Vec<u128> = Vec::new();
+
             loop {
                 if self.visible {
-                    if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(87) | windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(38)
-                    == (1 | -32767 | -32768)
-                    {
-                        //Up
+                    let mut handle = io::BufWriter::new(&stdout);
 
-                        for cube in &mut self.cubes {
-                            cube.middle_dot_y += 20.0;
-                            cube.builded_cube.is_builded = false;
-                        }
-                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(83) | windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(40)
-                        == (1 | -32767 | -32768)
-                    {
-                        //Down
+                    let update_time = Instant::now();
 
-                        for cube in &mut self.cubes {
-                            cube.middle_dot_y -= 20.0;
-                            cube.builded_cube.is_builded = false;
-                        }
-                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(65) | windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(37)
-                        == (1 | -32767 | -32768)
-                    {
-                        //Left
+                    // update
 
-                        for cube in &mut self.cubes {
-                            cube.middle_dot_x -= 20.0;
-                            cube.builded_cube.is_builded = false;
-                        }
-                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(68) | windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(39)
-                        == (1 | -32767 | -32768)
-                    {
-                        //Right
+                    self.last_press_key.check_keystrokes(&mut self.cubes);
 
-                        for cube in &mut self.cubes {
-                            cube.middle_dot_x += 20.0;
-                            cube.builded_cube.is_builded = false;
-                        }
-                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(90)
-                        == (1 | -32767 | -32768)
-                    {
-                        //Z axis
-
-                        for cube in &mut self.cubes {
-                            cube.rotation.rotate_directions.rotate_by_z = !cube.rotation.rotate_directions.rotate_by_z;
-                            cube.builded_cube.is_builded = false;
-                        }
-                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(88)
-                        == (1 | -32767 | -32768)
-                    {
-                        //X axis
-
-                        for cube in &mut self.cubes {
-                            cube.rotation.rotate_directions.rotate_by_x = !cube.rotation.rotate_directions.rotate_by_x;
-                            cube.builded_cube.is_builded = false;
-                        }
-                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(89)
-                        == (1 | -32767 | -32768)
-                    {
-                        //Y axis
-
-                        for cube in &mut self.cubes {
-                            cube.rotation.rotate_directions.rotate_by_y = !cube.rotation.rotate_directions.rotate_by_y;
-                            cube.builded_cube.is_builded = false;
-                        }
-                    }
-                    
-                    else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(13)
-                        == (1 | -32767 | -32768)
-                    {
-                        //Enter
-
-                        for cube in &mut self.cubes {
-                            cube.middle_dot_z += 20.0;
-                            cube.builded_cube.is_builded = false;
-                        }
-                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(32) | windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(27)
-                        == (1 | -32767 | -32768)
-                    {
-                        //Space
-
-                        for cube in &mut self.cubes {
-                            cube.middle_dot_z -= 20.0;
-                            cube.builded_cube.is_builded = false;
-                        }
-                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(107) == (1 | -32767 | -32768) {
-                        for cube in &mut self.cubes {
-                            cube.size += 1.0;
-                            cube.builded_cube.is_builded = false;
-                        }
-                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(109) == (1 | -32767 | -32768) {
-                        for cube in &mut self.cubes {
-                            cube.size -= 1.0;
-                            cube.builded_cube.is_builded = false;
-                        }
-                    } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(80) == (1 | -32767 | -32768) {
-                        for cube in &mut self.cubes {
-                            cube.rotation.is_need_rotate = !cube.rotation.is_need_rotate;
-                        }
-                    }
-                    
-                    for cube in &mut self.cubes {
+                    self.cubes.iter_mut().for_each(|cube| {
                         cube.build_shape(self.handle);
-                    }
+                    });
 
                     self.render()?;
+
+
+                    // fps
+
+                    if frame_time_render.len() < 200 {
+                        frame_time_render.push(update_time.elapsed().as_millis());
+                    } else {
+                        let mut accum = 0;
+
+                        frame_time_render.iter().for_each(|item| accum += item);
+                        
+                        let fps: f32 = 1000.0 / (accum as f32 / frame_time_render.len() as f32);
+                        
+                        writeln!(handle, "fps: {}", fps);
+
+                        frame_time_render = Vec::new();
+                    }
+
+                    // msgs
 
                     while PeekMessageA(&mut message, None, 0, 0, PM_REMOVE).into() {
                         if message.message == WM_QUIT {
