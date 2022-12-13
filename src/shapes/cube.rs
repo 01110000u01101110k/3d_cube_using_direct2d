@@ -2,7 +2,7 @@ use windows::{Win32::Foundation::*, Win32::Graphics::Direct2D::Common::*, Win32:
 
 use crate::engine_core::{Window};
 use crate::shapes::{CoordinateLines};
-use crate::shapes::primitives::{VectorPoint3D, Triangles};
+use crate::shapes::primitives::{VectorPoint3D, Triangle};
 use crate::math::{
     transoformate_3d_vector_to_2d_screen, 
     from_cartesian_to_screen_coordinates,
@@ -45,7 +45,7 @@ pub struct Cube {
     pub rotation: Rotatin,
     pub builded_cube: BuildedCube,
     pub to_draw: Vec<VectorPoint3D>,
-    pub draw_as_triangles: Vec<Triangles>
+    pub draw_as_triangles: Vec<Triangle>
 }
 
 impl Cube {
@@ -105,63 +105,63 @@ impl Cube {
     }
 
     pub fn set_triangles(&mut self) {
-        let mut draw_as_triangles: Vec<Triangles> = vec![
-            Triangles::new().set_triangle( // front side triangles
+        let mut draw_as_triangles: Vec<Triangle> = vec![
+            Triangle::new().set_triangle( // front side triangles
                 self.to_draw[0].clone(),
                 self.to_draw[1].clone(),
                 self.to_draw[2].clone()
             ),
-            Triangles::new().set_triangle( // front side triangles
+            Triangle::new().set_triangle( // front side triangles
                 self.to_draw[1].clone(),
                 self.to_draw[2].clone(),
                 self.to_draw[3].clone(),
             ),
-            Triangles::new().set_triangle( // back side triangles
+            Triangle::new().set_triangle( // back side triangles
                 self.to_draw[4].clone(),
                 self.to_draw[5].clone(),
                 self.to_draw[6].clone(),
             ),
-            Triangles::new().set_triangle( // back side triangles
+            Triangle::new().set_triangle( // back side triangles
                 self.to_draw[5].clone(),
                 self.to_draw[6].clone(),
                 self.to_draw[7].clone(),
             ),
-            Triangles::new().set_triangle( // top side triangles
+            Triangle::new().set_triangle( // top side triangles
                 self.to_draw[0].clone(),
                 self.to_draw[1].clone(),
                 self.to_draw[4].clone(),
             ),
-            Triangles::new().set_triangle( // top side triangles
+            Triangle::new().set_triangle( // top side triangles
                 self.to_draw[1].clone(),
                 self.to_draw[4].clone(),
                 self.to_draw[5].clone(),
             ),
-            Triangles::new().set_triangle( // down side triangles
+            Triangle::new().set_triangle( // down side triangles
                 self.to_draw[2].clone(),
                 self.to_draw[3].clone(),
                 self.to_draw[6].clone(),
             ),
-            Triangles::new().set_triangle( // down side triangles
+            Triangle::new().set_triangle( // down side triangles
                 self.to_draw[3].clone(),
                 self.to_draw[6].clone(),
                 self.to_draw[7].clone(),
             ),
-            Triangles::new().set_triangle( // left side triangles
+            Triangle::new().set_triangle( // left side triangles
                 self.to_draw[0].clone(),
                 self.to_draw[2].clone(),
                 self.to_draw[4].clone(),
             ),
-            Triangles::new().set_triangle( // left side triangles
+            Triangle::new().set_triangle( // left side triangles
                 self.to_draw[2].clone(),
                 self.to_draw[4].clone(),
                 self.to_draw[6].clone(),
             ),
-            Triangles::new().set_triangle( // right side triangles
+            Triangle::new().set_triangle( // right side triangles
                 self.to_draw[1].clone(),
                 self.to_draw[3].clone(),
                 self.to_draw[5].clone(),
             ),
-            Triangles::new().set_triangle( // right side triangles
+            Triangle::new().set_triangle( // right side triangles
                 self.to_draw[3].clone(),
                 self.to_draw[5].clone(),
                 self.to_draw[7].clone(),
@@ -475,6 +475,7 @@ impl Cube {
     pub fn draw_cube_from_triangles(&self, window: &Window) {
         self.draw_as_triangles.iter().for_each(|triangle| {
             triangle.draw_triangle(window);
+            triangle.fill_triangle_color(window);
         });
         
     }

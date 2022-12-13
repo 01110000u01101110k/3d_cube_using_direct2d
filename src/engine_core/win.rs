@@ -283,6 +283,7 @@ impl Window {
     fn draw_elements(&self) -> Result<()> {
         self.cubes.iter().for_each(|cube| {
             cube.draw_cube_from_triangles(&self);
+            //cube.draw_cube_from_points(&self);
             
         });
         
@@ -432,7 +433,7 @@ impl Window {
                         
                         let fps: f32 = 1000.0 / (accum as f32 / frame_time_render.len() as f32);
                         
-                        writeln!(handle, "fps: {}", fps);
+                        writeln!(handle, "fps: {}", fps as i32);
 
                         frame_time_render = Vec::new();
                     }
