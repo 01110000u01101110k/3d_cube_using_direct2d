@@ -1,4 +1,4 @@
-use windows::{Win32::Graphics::Direct2D::Common::*};
+use windows::Win32::Graphics::Direct2D::{Common::*, ID2D1SolidColorBrush};
 use crate::shapes::primitives::{VectorPoint3D};
 use crate::engine_core::{Window};
 
@@ -6,7 +6,8 @@ use crate::engine_core::{Window};
 pub struct Triangle {
     point_1: VectorPoint3D,
     point_2: VectorPoint3D,
-    point_3: VectorPoint3D
+    point_3: VectorPoint3D,
+    pub is_visible: bool
 }
 
 impl Triangle {
@@ -15,6 +16,7 @@ impl Triangle {
             point_1: VectorPoint3D::new(),
             point_2: VectorPoint3D::new(),
             point_3: VectorPoint3D::new(),
+            is_visible: false
         }
     }
 
@@ -26,19 +28,20 @@ impl Triangle {
         self.clone()
     }
 
-    pub fn fill_triangle_color(&self, window: &Window) {
+    pub fn find_perpendicular_direction_to_triangle(&self) -> f32 { 
+        (self.point_2.x - self.point_1.x) * (self.point_3.y - self.point_1.y) - 
+        (self.point_2.y - self.point_1.y) * (self.point_3.x - self.point_1.x)
+    }
+
+    pub fn fill_triangle_color(&self, window: &Window, brush: &ID2D1SolidColorBrush) {
         /*
             Реалізую алгоритм який дозволяє заповнити трикутник пікселями (растеризувати), 
             Це працює за рахунок "плоских" (у верхній чи ніжній частині) трикутників.
-            У випадку не "плоского" трикутник, трикутник ділиться на 2 плоских,
-            проводячи горизонтальну лінію від точки що лежить між найвищою і найнижчою точкою,
-            таким чином знаходимо четверту точку,
-            використовуючи нову точку зафарбовуються обидва "плоскі" трикутники,
-            як "трикутник з поским дном" і як "трикутник з плоским верхом".
+            У випадку не "плоского" трикутник, трикутник ділиться на 2 плоских трикутника.
         */
 
         fn sort_triangle_points(triangle: &Triangle) -> Triangle {
-            let mut sorted_triangle = triangle.clone();
+            let mut sorted_triangle: Triangle = triangle.clone();
             let mut swaped_point: VectorPoint3D;
 
             // sort step 1
@@ -66,9 +69,8 @@ impl Triangle {
             sorted_triangle
         }
 
-        fn fill_bottom_flat_triangle(window: &Window, sorted_triangle: Triangle) {
+        fn fill_bottom_flat_triangle(window: &Window, sorted_triangle: Triangle, brush: &ID2D1SolidColorBrush) {
             let target = window.target.as_ref().unwrap();
-            let brush = window.brush.as_ref().unwrap();
 
             let mut index_y = sorted_triangle.point_1.y;
             let mut first_target_point_x = sorted_triangle.point_1.x;
@@ -101,9 +103,8 @@ impl Triangle {
             }
         }
 
-        fn fill_top_flat_triangle(window: &Window, sorted_triangle: Triangle) {
+        fn fill_top_flat_triangle(window: &Window, sorted_triangle: Triangle, brush: &ID2D1SolidColorBrush) {
             let target = window.target.as_ref().unwrap();
-            let brush = window.brush.as_ref().unwrap();
 
             let mut index_y = sorted_triangle.point_3.y;
             let mut first_target_point_x = sorted_triangle.point_3.x;
@@ -136,44 +137,49 @@ impl Triangle {
             }
         }
 
-        let sorted_triangle: Triangle = sort_triangle_points(&self);
+        if self.is_visible {
+            
+            let sorted_triangle: Triangle = sort_triangle_points(&self);
 
-        if sorted_triangle.point_2.y == sorted_triangle.point_3.y {
-            fill_bottom_flat_triangle(window, sorted_triangle);
-        } else if sorted_triangle.point_1.y == sorted_triangle.point_2.y {
-            fill_top_flat_triangle(window, sorted_triangle);
-        } else {
-            let fourth: VectorPoint3D = VectorPoint3D {
-                x: (
-                    sorted_triangle.point_1.x + 
-                    ((sorted_triangle.point_2.y - sorted_triangle.point_1.y) / 
-                    (sorted_triangle.point_3.y - sorted_triangle.point_1.y)) * 
-                    (sorted_triangle.point_3.x - sorted_triangle.point_1.x)
-                ),
-                y: sorted_triangle.point_2.y,
-                z: sorted_triangle.point_2.z
-            };
-
-            let sort_for_bottom_flat_triangle = Triangle {
-                point_1: sorted_triangle.point_1.clone(),
-                point_2: sorted_triangle.point_2.clone(),
-                point_3: fourth.clone()
-            };
-
-            let sort_for_fill_top_flat_triangle = Triangle {
-                point_1: sorted_triangle.point_2.clone(),
-                point_2: fourth.clone(),
-                point_3: sorted_triangle.point_3.clone()
-            };
-
-            fill_bottom_flat_triangle(window, sort_for_bottom_flat_triangle);
-            fill_top_flat_triangle(window, sort_for_fill_top_flat_triangle); 
+            if sorted_triangle.point_2.y == sorted_triangle.point_3.y {
+                fill_bottom_flat_triangle(window, sorted_triangle, &brush);
+            } else if sorted_triangle.point_1.y == sorted_triangle.point_2.y {
+                fill_top_flat_triangle(window, sorted_triangle, &brush);
+            } else {
+                let fourth: VectorPoint3D = VectorPoint3D {
+                    x: (
+                        sorted_triangle.point_1.x + 
+                        ((sorted_triangle.point_2.y - sorted_triangle.point_1.y) / 
+                        (sorted_triangle.point_3.y - sorted_triangle.point_1.y)) * 
+                        (sorted_triangle.point_3.x - sorted_triangle.point_1.x)
+                    ),
+                    y: sorted_triangle.point_2.y,
+                    z: sorted_triangle.point_2.z
+                };
+    
+                let sort_for_bottom_flat_triangle = Triangle {
+                    point_1: sorted_triangle.point_1.clone(),
+                    point_2: sorted_triangle.point_2.clone(),
+                    point_3: fourth.clone(),
+                    is_visible: true
+                };
+    
+                let sort_for_fill_top_flat_triangle = Triangle {
+                    point_1: sorted_triangle.point_2.clone(),
+                    point_2: fourth.clone(),
+                    point_3: sorted_triangle.point_3.clone(),
+                    is_visible: true
+                };
+    
+                fill_bottom_flat_triangle(window, sort_for_bottom_flat_triangle, &brush);
+                fill_top_flat_triangle(window, sort_for_fill_top_flat_triangle, &brush); 
+            }
         }
     }
 
     pub fn draw_triangle(&self, window: &Window) {
         let target = window.target.as_ref().unwrap();
-        let brush = window.brush.as_ref().unwrap();
+        let white_brush = window.white_brush.as_ref().unwrap();
 
         unsafe {
             target.DrawLine(
@@ -185,7 +191,7 @@ impl Triangle {
                     x: self.point_2.x,
                     y: self.point_2.y,
                 },
-                brush,
+                white_brush,
                 2.0,
                 &window.style,
             );
@@ -199,7 +205,7 @@ impl Triangle {
                     x: self.point_3.x,
                     y: self.point_3.y,
                 },
-                brush,
+                white_brush,
                 2.0,
                 &window.style,
             );
@@ -213,7 +219,7 @@ impl Triangle {
                     x: self.point_1.x,
                     y: self.point_1.y,
                 },
-                brush,
+                white_brush,
                 2.0,
                 &window.style,
             );

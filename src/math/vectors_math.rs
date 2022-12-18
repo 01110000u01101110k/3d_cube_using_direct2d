@@ -1,6 +1,6 @@
 use crate::shapes::{VectorPoint3D};
 
-pub fn transoformate_3d_vector_to_2d_screen(
+pub fn perspective_projection(
     vector_3d: &VectorPoint3D,
     screen_width: f32, 
     screen_height: f32

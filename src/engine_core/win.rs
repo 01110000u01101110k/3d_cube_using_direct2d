@@ -5,10 +5,34 @@ use crate::engine_core::{LastPressKey};
 use std::time::{Duration, Instant};
 use std::io::{self, Write};
 
-fn create_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush> {
+fn create_white_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush> {
+    let color = D2D1_COLOR_F { r: 1.0, g: 1.0, b: 1.0, a: 1.0 };
+
+    let properties = D2D1_BRUSH_PROPERTIES { opacity: 1.0, transform: Matrix3x2::identity() };
+
+    unsafe { target.CreateSolidColorBrush(&color, &properties) }
+}
+
+fn create_black_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush> {
+    let color = D2D1_COLOR_F { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
+
+    let properties = D2D1_BRUSH_PROPERTIES { opacity: 1.0, transform: Matrix3x2::identity() };
+
+    unsafe { target.CreateSolidColorBrush(&color, &properties) }
+}
+
+fn create_gray_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush> {
+    let color = D2D1_COLOR_F { r: 0.7, g: 0.7, b: 0.7, a: 1.0 };
+
+    let properties = D2D1_BRUSH_PROPERTIES { opacity: 1.0, transform: Matrix3x2::identity() };
+
+    unsafe { target.CreateSolidColorBrush(&color, &properties) }
+}
+
+fn create_yellow_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush> {
     let color = D2D1_COLOR_F { r: 0.9, g: 0.8, b: 0.1, a: 1.0 };
 
-    let properties = D2D1_BRUSH_PROPERTIES { opacity: 0.8, transform: Matrix3x2::identity() };
+    let properties = D2D1_BRUSH_PROPERTIES { opacity: 1.0, transform: Matrix3x2::identity() };
 
     unsafe { target.CreateSolidColorBrush(&color, &properties) }
 }
@@ -16,7 +40,7 @@ fn create_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush> {
 fn create_red_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush> {
     let color = D2D1_COLOR_F { r: 0.9, g: 0.1, b: 0.1, a: 1.0 };
 
-    let properties = D2D1_BRUSH_PROPERTIES { opacity: 0.8, transform: Matrix3x2::identity() };
+    let properties = D2D1_BRUSH_PROPERTIES { opacity: 1.0, transform: Matrix3x2::identity() };
 
     unsafe { target.CreateSolidColorBrush(&color, &properties) }
 }
@@ -24,7 +48,7 @@ fn create_red_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush>
 fn create_green_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush> {
     let color = D2D1_COLOR_F { r: 0.1, g: 0.9, b: 0.1, a: 1.0 };
 
-    let properties = D2D1_BRUSH_PROPERTIES { opacity: 0.8, transform: Matrix3x2::identity() };
+    let properties = D2D1_BRUSH_PROPERTIES { opacity: 1.0, transform: Matrix3x2::identity() };
 
     unsafe { target.CreateSolidColorBrush(&color, &properties) }
 }
@@ -32,7 +56,7 @@ fn create_green_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrus
 fn create_blue_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush> {
     let color = D2D1_COLOR_F { r: 0.1, g: 0.1, b: 0.9, a: 1.0 };
 
-    let properties = D2D1_BRUSH_PROPERTIES { opacity: 0.8, transform: Matrix3x2::identity() };
+    let properties = D2D1_BRUSH_PROPERTIES { opacity: 1.0, transform: Matrix3x2::identity() };
 
     unsafe { target.CreateSolidColorBrush(&color, &properties) }
 }
@@ -160,7 +184,10 @@ pub struct Window {
 
     pub target: Option<ID2D1DeviceContext>,
     swapchain: Option<IDXGISwapChain1>,
-    pub brush: Option<ID2D1SolidColorBrush>,
+    pub white_brush: Option<ID2D1SolidColorBrush>,
+    pub black_brush: Option<ID2D1SolidColorBrush>,
+    pub gray_brush: Option<ID2D1SolidColorBrush>,
+    pub yellow_brush: Option<ID2D1SolidColorBrush>,
     pub brush_red: Option<ID2D1SolidColorBrush>,
     pub brush_green: Option<ID2D1SolidColorBrush>,
     pub brush_blue: Option<ID2D1SolidColorBrush>,
@@ -189,7 +216,10 @@ impl Window {
             style,
             target: None,
             swapchain: None,
-            brush: None,
+            white_brush: None,
+            black_brush: None,
+            gray_brush: None,
+            yellow_brush: None,
             brush_red: None,
             brush_green: None,
             brush_blue: None,
@@ -211,7 +241,10 @@ impl Window {
             let swapchain = create_swapchain(&device, self.handle)?;
             create_swapchain_bitmap(&swapchain, &target)?;
 
-            self.brush = create_brush(&target).ok();
+            self.white_brush = create_white_brush(&target).ok();
+            self.black_brush = create_black_brush(&target).ok();
+            self.gray_brush = create_gray_brush(&target).ok();
+            self.yellow_brush = create_yellow_brush(&target).ok();
             self.brush_red = create_red_brush(&target).ok();
             self.brush_green = create_green_brush(&target).ok();
             self.brush_blue = create_blue_brush(&target).ok();
@@ -247,7 +280,13 @@ impl Window {
     }
 
     fn release_device_resources(&mut self) {
-        self.brush = None;
+        self.white_brush = None;
+        self.black_brush = None;
+        self.gray_brush = None;
+        self.yellow_brush = None;
+        self.brush_red = None;
+        self.brush_green = None;
+        self.brush_blue = None;
         self.draw_space = None;
     }
 

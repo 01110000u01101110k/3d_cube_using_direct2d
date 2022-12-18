@@ -4,7 +4,7 @@ use crate::engine_core::{Window};
 use crate::shapes::{CoordinateLines};
 use crate::shapes::primitives::{VectorPoint3D, Triangle};
 use crate::math::{
-    transoformate_3d_vector_to_2d_screen, 
+    perspective_projection, 
     from_cartesian_to_screen_coordinates,
     Rotatin,
     RotationTypes
@@ -104,71 +104,72 @@ impl Cube {
         }
     }
 
-    pub fn set_triangles(&mut self) {
-        let mut draw_as_triangles: Vec<Triangle> = vec![
+    pub fn set_cube_as_triangles_from_points(&self, points: &Vec<VectorPoint3D>) -> Vec<Triangle> {
+        // розташовую трикутники правильним чином, щоб потрібні трикутники були повернуті обличчям до камери
+        let draw_as_triangles: Vec<Triangle> = vec![
             Triangle::new().set_triangle( // front side triangles
-                self.to_draw[0].clone(),
-                self.to_draw[1].clone(),
-                self.to_draw[2].clone()
+                points[0].clone(),
+                points[1].clone(),
+                points[2].clone()
             ),
             Triangle::new().set_triangle( // front side triangles
-                self.to_draw[1].clone(),
-                self.to_draw[2].clone(),
-                self.to_draw[3].clone(),
+                points[3].clone(),
+                points[2].clone(),
+                points[1].clone(),
             ),
             Triangle::new().set_triangle( // back side triangles
-                self.to_draw[4].clone(),
-                self.to_draw[5].clone(),
-                self.to_draw[6].clone(),
+                points[6].clone(),
+                points[5].clone(),
+                points[4].clone(),
             ),
             Triangle::new().set_triangle( // back side triangles
-                self.to_draw[5].clone(),
-                self.to_draw[6].clone(),
-                self.to_draw[7].clone(),
+                points[5].clone(),
+                points[6].clone(),
+                points[7].clone(),
             ),
             Triangle::new().set_triangle( // top side triangles
-                self.to_draw[0].clone(),
-                self.to_draw[1].clone(),
-                self.to_draw[4].clone(),
+                points[4].clone(),
+                points[1].clone(),
+                points[0].clone(),
             ),
             Triangle::new().set_triangle( // top side triangles
-                self.to_draw[1].clone(),
-                self.to_draw[4].clone(),
-                self.to_draw[5].clone(),
+                points[1].clone(),
+                points[4].clone(),
+                points[5].clone(),
             ),
             Triangle::new().set_triangle( // down side triangles
-                self.to_draw[2].clone(),
-                self.to_draw[3].clone(),
-                self.to_draw[6].clone(),
+                points[2].clone(),
+                points[3].clone(),
+                points[6].clone(),
             ),
             Triangle::new().set_triangle( // down side triangles
-                self.to_draw[3].clone(),
-                self.to_draw[6].clone(),
-                self.to_draw[7].clone(),
+                points[7].clone(),
+                points[6].clone(),
+                points[3].clone(),
             ),
             Triangle::new().set_triangle( // left side triangles
-                self.to_draw[0].clone(),
-                self.to_draw[2].clone(),
-                self.to_draw[4].clone(),
+                points[0].clone(),
+                points[2].clone(),
+                points[4].clone(),
             ),
             Triangle::new().set_triangle( // left side triangles
-                self.to_draw[2].clone(),
-                self.to_draw[4].clone(),
-                self.to_draw[6].clone(),
+                points[6].clone(),
+                points[4].clone(),
+                points[2].clone(),
             ),
             Triangle::new().set_triangle( // right side triangles
-                self.to_draw[1].clone(),
-                self.to_draw[3].clone(),
-                self.to_draw[5].clone(),
+                points[5].clone(),
+                points[3].clone(),
+                points[1].clone(),
             ),
             Triangle::new().set_triangle( // right side triangles
-                self.to_draw[3].clone(),
-                self.to_draw[5].clone(),
-                self.to_draw[7].clone(),
+                points[3].clone(),
+                points[5].clone(),
+                points[7].clone(),
             ),
         ];
 
-        self.draw_as_triangles = draw_as_triangles;
+        draw_as_triangles
 
         //println!("{:?}", &self.draw_as_triangles);
     }
@@ -196,8 +197,10 @@ impl Cube {
 
         self.try_to_rotate_shape(&mut builded_cube);
 
-        builded_cube.points.iter_mut().for_each(|vector| {
+        let mut vectors_with_perspective_projection: Vec<VectorPoint3D> = Vec::new();
 
+        builded_cube.points.iter_mut().for_each(|vector| {
+            // якщо треба обертати фігуру навколо себе, зміщення точок застосовуємо тільки після виклику функції обертання
             match self.rotation.rotation_type {
                 RotationTypes::AroundSelf => {
                     vector.x += self.middle_dot_x;
@@ -207,25 +210,61 @@ impl Cube {
                 _ => ()
             }
 
-            let vector_2d_proection_on_screen = transoformate_3d_vector_to_2d_screen(
-                vector,
+            // трансформуємо 3d вектор з урахуванням перспективи
+            let vector_with_perspective_projection = perspective_projection(
+                &vector,
                 client_window_size.right as f32,
                 client_window_size.bottom as f32
             );
 
+            // трансформую вектор в екранні координати
             let result_vector = from_cartesian_to_screen_coordinates(
-                &vector_2d_proection_on_screen, 
+                &vector_with_perspective_projection, 
                 client_window_size.right as f32,
                 client_window_size.bottom as f32
             );
 
+            vectors_with_perspective_projection.push(vector_with_perspective_projection);
             cube_2d_proection_on_screen.push(result_vector);
         });
 
-
         self.to_draw = cube_2d_proection_on_screen;
 
-        self.set_triangles();
+        /* 
+            знаходжу паралелі для трикутників щоб визначити якою стороною повернутий трикутник
+            (для застосування конкретно формули яку я застосував, спочатку приводимо точки до перспективної проекції,
+            для цього був сформований масив vectors_with_perspective_projection вище в коді, який тут використовую), 
+            далі формую bool масив, де помічаю які з трикутників потрібно рендерити 
+        */
+        let triangles: Vec<Triangle> = self.set_cube_as_triangles_from_points(&vectors_with_perspective_projection);
+        let mut is_visible_triangle: Vec<bool> = Vec::new();
+        
+        triangles.iter().for_each(|triangle| {
+            if triangle.find_perpendicular_direction_to_triangle() < 0.0 {
+                is_visible_triangle.push(true);
+            } else {
+                is_visible_triangle.push(false);
+            }
+        });
+
+        /* 
+            створюю фінальний масив трикутників за допомогою масиву точок "self.to_draw",
+            в якому вже застосовано приведення до екранних координат,
+            беру значення з масиву в якому вказано який з трикутників має бути відрендерений,
+            і присвоюю їх фінальному масиву трикутників.
+        */
+        let mut draw_as_triangles_index = 0;
+        let mut draw_as_triangles = self.set_cube_as_triangles_from_points(&self.to_draw);
+
+        draw_as_triangles.iter_mut().for_each(|triangle| {
+            if triangle.is_visible != is_visible_triangle[draw_as_triangles_index] {
+                triangle.is_visible = is_visible_triangle[draw_as_triangles_index];
+            }
+
+            draw_as_triangles_index += 1;
+        });
+
+        self.draw_as_triangles = draw_as_triangles;
     }
 
     fn build_cube_from_middle_points(&mut self, middle_dot_x: f32, middle_dot_y: f32, middle_dot_z: f32) -> &mut Self {
@@ -268,23 +307,7 @@ impl Cube {
 
     pub fn draw_cube_from_points(&self, window: &Window) {
         let target = window.target.as_ref().unwrap();
-        let brush = window.brush.as_ref().unwrap();
-
-        /*
-        які точки повинні бути зєднані:
-        
-        p_0 -> p_1 -> p_3 -> p_2 -> p_0
-
-        p_4 -> p_5 -> p_7 -> p_6 -> p_4
-
-        p_0 -> p_4
-
-        p_1 -> p_5
-
-        p_2 -> p_6
-
-        p_3 -> p_7
-        */
+        let yellow_brush = window.yellow_brush.as_ref().unwrap();
 
         unsafe{
             // 1
@@ -297,7 +320,7 @@ impl Cube {
                     x: self.to_draw[1].x,
                     y: self.to_draw[1].y,
                 },
-                brush,
+                yellow_brush,
                 4.0,
                 &window.style,
             );
@@ -311,7 +334,7 @@ impl Cube {
                     x: self.to_draw[3].x,
                     y: self.to_draw[3].y,
                 },
-                brush,
+                yellow_brush,
                 4.0,
                 &window.style,
             );
@@ -325,7 +348,7 @@ impl Cube {
                     x: self.to_draw[2].x,
                     y: self.to_draw[2].y,
                 },
-                brush,
+                yellow_brush,
                 4.0,
                 &window.style,
             );
@@ -339,7 +362,7 @@ impl Cube {
                     x: self.to_draw[0].x,
                     y: self.to_draw[0].y,
                 },
-                brush,
+                yellow_brush,
                 4.0,
                 &window.style,
             );
@@ -355,7 +378,7 @@ impl Cube {
                     x: self.to_draw[5].x,
                     y: self.to_draw[5].y,
                 },
-                brush,
+                yellow_brush,
                 4.0,
                 &window.style,
             );
@@ -369,7 +392,7 @@ impl Cube {
                     x: self.to_draw[7].x,
                     y: self.to_draw[7].y,
                 },
-                brush,
+                yellow_brush,
                 4.0,
                 &window.style,
             );
@@ -383,7 +406,7 @@ impl Cube {
                     x: self.to_draw[6].x,
                     y: self.to_draw[6].y,
                 },
-                brush,
+                yellow_brush,
                 4.0,
                 &window.style,
             );
@@ -397,7 +420,7 @@ impl Cube {
                     x: self.to_draw[4].x,
                     y: self.to_draw[4].y,
                 },
-                brush,
+                yellow_brush,
                 4.0,
                 &window.style,
             );
@@ -413,7 +436,7 @@ impl Cube {
                     x: self.to_draw[4].x,
                     y: self.to_draw[4].y,
                 },
-                brush,
+                yellow_brush,
                 4.0,
                 &window.style,
             );
@@ -429,7 +452,7 @@ impl Cube {
                     x: self.to_draw[5].x,
                     y: self.to_draw[5].y,
                 },
-                brush,
+                yellow_brush,
                 4.0,
                 &window.style,
             );
@@ -445,7 +468,7 @@ impl Cube {
                     x: self.to_draw[6].x,
                     y: self.to_draw[6].y,
                 },
-                brush,
+                yellow_brush,
                 4.0,
                 &window.style,
             );
@@ -461,21 +484,35 @@ impl Cube {
                     x: self.to_draw[7].x,
                     y: self.to_draw[7].y,
                 },
-                brush,
+                yellow_brush,
                 4.0,
                 &window.style,
             );
-        }            
-
-        // draw coordinate lines
-
-        //CoordinateLines::new().draw_coordinate_lines(&window, self.to_draw[0].x + (self.to_draw[0].x / 2.0), self.to_draw[0].y + (self.to_draw[0].y / 2.0));
+        }
     }
 
     pub fn draw_cube_from_triangles(&self, window: &Window) {
+        let mut counter: f32 = 0.0;
+        let mut color_num: usize = 0;
+
+        let colors = vec![
+            window.white_brush.as_ref().unwrap(),
+            window.black_brush.as_ref().unwrap(),
+            window.gray_brush.as_ref().unwrap(),
+            window.yellow_brush.as_ref().unwrap(),
+            window.brush_red.as_ref().unwrap(),
+            window.brush_green.as_ref().unwrap(),
+            window.brush_blue.as_ref().unwrap()
+        ];
+
         self.draw_as_triangles.iter().for_each(|triangle| {
-            triangle.draw_triangle(window);
-            triangle.fill_triangle_color(window);
+            //triangle.draw_triangle(window);
+            triangle.fill_triangle_color(window, colors[color_num]);
+
+            counter += 0.5;
+            if counter == 1.0 || counter == 2.0 || counter == 3.0 || counter == 4.0 || counter == 5.0 || counter == 6.0 {
+                color_num += 1;
+            }
         });
         
     }

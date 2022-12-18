@@ -30,15 +30,15 @@ fn main() {
         to_draw: Vec::new()
     })*/
     .build_cube(Cube{
-        middle_dot_x: 700.0,
-        middle_dot_y: 350.0,
+        middle_dot_x: 0.0,
+        middle_dot_y: 0.0,
         middle_dot_z: 0.0,
         size: 100.0,
         rotation: Rotatin {
             is_need_rotate: true,
             degree: Degree::new(),
             rotate_directions: RotateDirections {
-                rotate_by_x: true,
+                rotate_by_x: false,
                 rotate_by_y: false,
                 rotate_by_z: false
             },
@@ -48,7 +48,7 @@ fn main() {
         },
         builded_cube: BuildedCube::new(),
         to_draw: Vec::new(),
-        draw_as_triangles: Vec::new()
+        draw_as_triangles: Vec::new(),
     })
 
     /*
