@@ -7,7 +7,7 @@ Also implemented:
 - the arrow keys are used to move the camera left, right, forward, backward.
 - Use + and - to zoom in and out of the cube.
 
-To test it, try downloading the example and run for look. or edit the file main.js, to play around with the example. You can add new build_cube according to the example, where the Cube structure should be filled in accordingly, this will help you customize each cube you want to display (I hope the structure field names are intuitive). Don't forget to offset the cube using the middle_dot fields that are responsible for the center of the cube. There may also be visual anomalies due to a certain perception of 3D objects by our eyes, for example - if the cubes overlap each other, depth will be lost, this is due to the lack of shadows in this version.
+To test it, try downloading the example and run for look. Or edit the file main.js, to play around with the example. You can add new build_cube according to the example, where the Cube structure should be filled in accordingly, this will help you customize each cube you want to display (I hope the structure field names are intuitive). Don't forget to offset the cube using the middle_dot fields that are responsible for the center of the cube. There may also be visual anomalies due to a certain perception of 3D objects by our eyes, for example - if the cubes overlap each other, depth will be lost, this is due to the lack of shadows in this version.
 
 An example for drawing multiple cubes:
 
