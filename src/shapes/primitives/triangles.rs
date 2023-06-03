@@ -96,6 +96,22 @@ impl Triangle {
                     );
                 }
 
+                /*let mut target_point = first_target_point_x;
+
+                while target_point < second_target_point_x {
+                    let rect = D2D_RECT_F {
+                        left: target_point,
+                        top: index_y,
+                        right: target_point + 1.0,
+                        bottom: index_y + 1.0,
+                    };
+                    unsafe {
+                        target.FillRectangle(&rect, brush);
+                    };
+
+                    target_point += 1.0;
+                }*/
+
                 first_target_point_x += first_length;
                 second_target_point_x += second_length;
 
@@ -129,6 +145,22 @@ impl Triangle {
                         &window.style,
                     );
                 }
+
+                /*let mut target_point = first_target_point_x;
+
+                while target_point < second_target_point_x {
+                    let rect = D2D_RECT_F {
+                        left: target_point,
+                        top: index_y,
+                        right: target_point + 1.0,
+                        bottom: index_y + 1.0,
+                    };
+                    unsafe {
+                        target.FillRectangle(&rect, brush);
+                    };
+
+                    target_point += 1.0;
+                }*/
 
                 first_target_point_x -= first_length;
                 second_target_point_x -= second_length;

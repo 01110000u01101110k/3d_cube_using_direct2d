@@ -1,4 +1,4 @@
-use windows::{Win32::Foundation::*, Win32::Graphics::Direct2D::Common::*, Win32::UI::WindowsAndMessaging::*};
+use windows::{core::*, Foundation::Numerics::*, Win32::Foundation::*, Win32::Graphics::Direct2D::Common::*, Win32::Graphics::Direct2D::*, Win32::UI::WindowsAndMessaging::*};
 
 use crate::engine_core::{Window};
 use crate::shapes::{CoordinateLines};
@@ -491,9 +491,27 @@ impl Cube {
         }
     }
 
+    pub fn create_color(&self, target: &ID2D1DeviceContext, red: f32, green: f32, blue: f32, alfa: f32, opacity: f32) -> Result<ID2D1SolidColorBrush> {
+        let color = D2D1_COLOR_F { r: red, g: green, b: blue, a: alfa };
+
+        let properties = D2D1_BRUSH_PROPERTIES { opacity: opacity, transform: Matrix3x2::identity() };
+
+        unsafe { target.CreateSolidColorBrush(&color, &properties) }
+    }
+
+    pub fn create_light_target(&self, position_x: f32, position_y: f32, position_z: f32) {
+
+    } 
+
     pub fn draw_cube_from_triangles(&self, window: &Window) {
         let mut counter: f32 = 0.0;
         let mut color_num: usize = 0;
+
+        /*
+        let target = window.target.as_ref().unwrap();
+
+        let mut color = self.create_color(&target, 0.3, 0.7, 0.7, 1.0, 1.0).ok();
+        */
 
         let colors = vec![
             window.white_brush.as_ref().unwrap(),
@@ -514,6 +532,7 @@ impl Cube {
                 color_num += 1;
             }
         });
-        
+
+        //color = None
     }
 }

@@ -38,8 +38,8 @@ fn main() {
             is_need_rotate: true,
             degree: Degree::new(),
             rotate_directions: RotateDirections {
-                rotate_by_x: false,
-                rotate_by_y: false,
+                rotate_by_x: true,
+                rotate_by_y: true,
                 rotate_by_z: false
             },
             deley_rotate_ms: 2.0,
