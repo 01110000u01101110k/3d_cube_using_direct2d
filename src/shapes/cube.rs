@@ -1,7 +1,6 @@
 use windows::{core::*, Foundation::Numerics::*, Win32::Foundation::*, Win32::Graphics::Direct2D::Common::*, Win32::Graphics::Direct2D::*, Win32::UI::WindowsAndMessaging::*};
 
 use crate::engine_core::{Window};
-use crate::shapes::{CoordinateLines};
 use crate::shapes::primitives::{VectorPoint3D, Triangle};
 use crate::math::{
     perspective_projection, 
@@ -232,7 +231,7 @@ impl Cube {
 
         /* 
             знаходжу паралелі для трикутників щоб визначити якою стороною повернутий трикутник
-            (для застосування конкретно формули яку я застосував, спочатку приводимо точки до перспективної проекції,
+            (для використання формули яку я застосував, спочатку приводимо точки до перспективної проекції,
             для цього був сформований масив vectors_with_perspective_projection вище в коді, який тут використовую), 
             далі формую bool масив, де помічаю які з трикутників потрібно рендерити 
         */
