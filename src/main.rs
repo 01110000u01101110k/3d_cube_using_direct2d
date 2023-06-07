@@ -30,7 +30,7 @@ fn main() {
             to_draw: Vec::new(),
             draw_as_triangles: Vec::new(),
             use_triangles_for_build: true,
-            fill_in_triangles_with_color: false
+            fill_in_triangles_with_color: true
         })
         .run();
 }
