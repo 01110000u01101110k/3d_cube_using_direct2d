@@ -29,6 +29,8 @@ fn main() {
             builded_cube: BuildedCube::new(),
             to_draw: Vec::new(),
             draw_as_triangles: Vec::new(),
+            use_triangles_for_build: true,
+            fill_in_triangles_with_color: false
         })
         .run();
 }

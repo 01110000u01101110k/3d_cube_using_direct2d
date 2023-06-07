@@ -44,22 +44,9 @@ pub struct Cube {
     pub rotation: Rotatin,
     pub builded_cube: BuildedCube,
     pub to_draw: Vec<VectorPoint3D>,
-    pub draw_as_triangles: Vec<Triangle>
-}
-
-impl Cube {
-    pub fn set_cube_info(&self, new_cube: Cube) -> Self {
-        Self {
-            middle_dot_x: new_cube.middle_dot_x,
-            middle_dot_y: new_cube.middle_dot_y,
-            middle_dot_z: new_cube.middle_dot_z,
-            size: new_cube.size,
-            rotation: new_cube.rotation,
-            builded_cube: new_cube.builded_cube,
-            to_draw: new_cube.to_draw,
-            draw_as_triangles: new_cube.draw_as_triangles
-        }
-    }
+    pub draw_as_triangles: Vec<Triangle>,
+    pub use_triangles_for_build: bool,
+    pub fill_in_triangles_with_color: bool,
 }
 
 impl Cube {
@@ -72,7 +59,9 @@ impl Cube {
             rotation: Rotatin::new(),
             builded_cube: BuildedCube::new(),
             to_draw: Vec::new(),
-            draw_as_triangles: Vec::new()
+            draw_as_triangles: Vec::new(),
+            use_triangles_for_build: false,
+            fill_in_triangles_with_color: false
         }
     }
 
@@ -503,34 +492,42 @@ impl Cube {
     } 
 
     pub fn draw_cube_from_triangles(&self, window: &Window) {
-        let mut counter: f32 = 0.0;
-        let mut color_num: usize = 0;
+        if self.fill_in_triangles_with_color {
 
-        /*
-        let target = window.target.as_ref().unwrap();
+            let mut counter: f32 = 0.0;
+            let mut color_num: usize = 0;
 
-        let mut color = self.create_color(&target, 0.3, 0.7, 0.7, 1.0, 1.0).ok();
-        */
+            /*
+            let target = window.target.as_ref().unwrap();
 
-        let colors = vec![
-            window.white_brush.as_ref().unwrap(),
-            window.black_brush.as_ref().unwrap(),
-            window.gray_brush.as_ref().unwrap(),
-            window.yellow_brush.as_ref().unwrap(),
-            window.brush_red.as_ref().unwrap(),
-            window.brush_green.as_ref().unwrap(),
-            window.brush_blue.as_ref().unwrap()
-        ];
+            let mut color = self.create_color(&target, 0.3, 0.7, 0.7, 1.0, 1.0).ok();
+            */
 
-        self.draw_as_triangles.iter().for_each(|triangle| {
-            //triangle.draw_triangle(window);
-            triangle.fill_triangle_color(window, colors[color_num]);
+            let colors = vec![
+                window.white_brush.as_ref().unwrap(),
+                window.black_brush.as_ref().unwrap(),
+                window.gray_brush.as_ref().unwrap(),
+                window.yellow_brush.as_ref().unwrap(),
+                window.brush_red.as_ref().unwrap(),
+                window.brush_green.as_ref().unwrap(),
+                window.brush_blue.as_ref().unwrap()
+            ];
 
-            counter += 0.5;
-            if counter == 1.0 || counter == 2.0 || counter == 3.0 || counter == 4.0 || counter == 5.0 || counter == 6.0 {
-                color_num += 1;
-            }
-        });
+            self.draw_as_triangles.iter().for_each(|triangle| {
+                //triangle.draw_triangle(window);
+                triangle.fill_triangle_color(window, colors[color_num]);
+
+                counter += 0.5;
+                if counter == 1.0 || counter == 2.0 || counter == 3.0 || counter == 4.0 || counter == 5.0 || counter == 6.0 {
+                    color_num += 1;
+                }
+            });
+
+        } else {
+            self.draw_as_triangles.iter().for_each(|triangle| {
+                triangle.draw_triangle(window);
+            });
+        }
 
         //color = None
     }

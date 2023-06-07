@@ -321,8 +321,11 @@ impl Window {
 
     fn draw_elements(&self) -> Result<()> {
         self.cubes.iter().for_each(|cube| {
-            cube.draw_cube_from_triangles(&self);
-            //cube.draw_cube_from_points(&self);
+            if cube.use_triangles_for_build {
+                cube.draw_cube_from_triangles(&self);
+            } else {
+                cube.draw_cube_from_points(&self);
+            }
             
         });
         
