@@ -60,7 +60,7 @@ Engine::new()
         builded_cube: BuildedCube::new(),
         to_draw: Vec::new(),
         draw_as_triangles: Vec::new(),
-        use_triangles_for_build: true,
+        use_triangles_for_build: false,
         fill_in_triangles_with_color: false
     })
     .build_cube(Cube{
@@ -83,7 +83,7 @@ Engine::new()
         builded_cube: BuildedCube::new(),
         to_draw: Vec::new(),
         draw_as_triangles: Vec::new(),
-        use_triangles_for_build: false,
+        use_triangles_for_build: true,
         fill_in_triangles_with_color: false
     })
     .run();
