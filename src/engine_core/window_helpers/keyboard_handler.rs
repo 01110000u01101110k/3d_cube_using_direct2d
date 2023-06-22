@@ -1,5 +1,6 @@
 use windows;
 use crate::shapes::{Cube};
+use rayon::prelude::*;
 
 pub struct LastPressKey {
     pub keystrokes: i32
@@ -20,7 +21,7 @@ impl LastPressKey {
                 self.keystrokes = 87;
                 //Up
 
-                cubes.iter_mut().for_each(|cube| {
+                cubes.par_iter_mut().for_each(|cube| {
                     cube.middle_dot_y += 20.0;
                     cube.builded_cube.is_builded = false;
                 });
@@ -30,7 +31,7 @@ impl LastPressKey {
                 self.keystrokes = 83;
                 //Down
 
-                cubes.iter_mut().for_each(|cube| {
+                cubes.par_iter_mut().for_each(|cube| {
                     cube.middle_dot_y -= 20.0;
                     cube.builded_cube.is_builded = false;
                 });
@@ -40,7 +41,7 @@ impl LastPressKey {
                 self.keystrokes = 65;
                 //Left
 
-                cubes.iter_mut().for_each(|cube| {
+                cubes.par_iter_mut().for_each(|cube| {
                     cube.middle_dot_x -= 20.0;
                     cube.builded_cube.is_builded = false;
                 });
@@ -50,14 +51,14 @@ impl LastPressKey {
                 self.keystrokes = 68;
                 //Right
 
-                cubes.iter_mut().for_each(|cube| {
+                cubes.par_iter_mut().for_each(|cube| {
                     cube.middle_dot_x += 20.0;
                     cube.builded_cube.is_builded = false;
                 });
             } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(38) == (1 | -32767 | -32768) {
                 self.keystrokes = 38;
                 // camera move forward
-                cubes.iter_mut().for_each(|cube| {
+                cubes.par_iter_mut().for_each(|cube| {
                     cube.middle_dot_z -= 10.0;
 
                     cube.builded_cube.is_builded = false;
@@ -65,7 +66,7 @@ impl LastPressKey {
             } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(40) == (1 | -32767 | -32768) {
                 self.keystrokes = 40;
                 // camera move back
-                cubes.iter_mut().for_each(|cube| {
+                cubes.par_iter_mut().for_each(|cube| {
                     cube.middle_dot_z += 10.0;
 
                     cube.builded_cube.is_builded = false;
@@ -73,7 +74,7 @@ impl LastPressKey {
             } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(37) == (1 | -32767 | -32768) {
                 self.keystrokes = 37;
                 // camera move left
-                cubes.iter_mut().for_each(|cube| {
+                cubes.par_iter_mut().for_each(|cube| {
                     cube.middle_dot_x += 10.0;
 
                     /*let roatate_degree = 0.05;
@@ -84,7 +85,7 @@ impl LastPressKey {
             } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(39) == (1 | -32767 | -32768) {
                 self.keystrokes = 39;
                 // camera move right
-                cubes.iter_mut().for_each(|cube| {
+                cubes.par_iter_mut().for_each(|cube| {
                     cube.middle_dot_x -= 10.0;
 
                     /*let roatate_degree = -0.05;
@@ -98,7 +99,7 @@ impl LastPressKey {
                 self.keystrokes = 90;
                 //Z axis
 
-                cubes.iter_mut().for_each(|cube| {
+                cubes.par_iter_mut().for_each(|cube| {
                     cube.rotation.rotate_directions.rotate_by_z = !cube.rotation.rotate_directions.rotate_by_z;
                     cube.builded_cube.is_builded = false;
                 });
@@ -108,7 +109,7 @@ impl LastPressKey {
                 self.keystrokes = 88;
                 //X axis
 
-                cubes.iter_mut().for_each(|cube| {
+                cubes.par_iter_mut().for_each(|cube| {
                     cube.rotation.rotate_directions.rotate_by_x = !cube.rotation.rotate_directions.rotate_by_x;
                     cube.builded_cube.is_builded = false;
                 });
@@ -118,7 +119,7 @@ impl LastPressKey {
                 self.keystrokes = 89;
                 //Y axis
 
-                cubes.iter_mut().for_each(|cube| {
+                cubes.par_iter_mut().for_each(|cube| {
                     cube.rotation.rotate_directions.rotate_by_y = !cube.rotation.rotate_directions.rotate_by_y;
                     cube.builded_cube.is_builded = false;
                 });
@@ -130,7 +131,7 @@ impl LastPressKey {
                 self.keystrokes = 13;
                 //Enter
 
-                cubes.iter_mut().for_each(|cube| {
+                cubes.par_iter_mut().for_each(|cube| {
                     cube.middle_dot_z += 20.0;
                     cube.builded_cube.is_builded = false;
                 });
@@ -140,28 +141,28 @@ impl LastPressKey {
                 self.keystrokes = 32;
                 //Space
 
-                cubes.iter_mut().for_each(|cube| {
+                cubes.par_iter_mut().for_each(|cube| {
                     cube.middle_dot_z -= 20.0;
                     cube.builded_cube.is_builded = false;
                 });
             } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(107) == (1 | -32767 | -32768) {
                 self.keystrokes = 107;
 
-                cubes.iter_mut().for_each(|cube| {
+                cubes.par_iter_mut().for_each(|cube| {
                     cube.size += 1.0;
                     cube.builded_cube.is_builded = false;
                 });
             } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(109) == (1 | -32767 | -32768) {
                 self.keystrokes = 109;
 
-                cubes.iter_mut().for_each(|cube| {
+                cubes.par_iter_mut().for_each(|cube| {
                     cube.size -= 1.0;
                     cube.builded_cube.is_builded = false;
                 });
             } else if windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(80) == (1 | -32767 | -32768) {
                 self.keystrokes = 80;
 
-                cubes.iter_mut().for_each(|cube| {
+                cubes.par_iter_mut().for_each(|cube| {
                     cube.rotation.is_need_rotate = !cube.rotation.is_need_rotate;
                 });
             }

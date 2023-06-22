@@ -1,5 +1,6 @@
 use crate::shapes::{VectorPoint3D, BuildedCube};
 use crate::math::{PI_2};
+use rayon::prelude::*;
 
 #[derive(Clone, Debug)]
 pub enum RotationTypes {
@@ -94,7 +95,7 @@ impl Rotatin {
     }
     
     pub fn rotate_shape(&mut self, shape: &mut BuildedCube) -> &Self {
-        shape.points.iter_mut().for_each(|point| {
+        shape.points.par_iter_mut().for_each(|point| {
             self.rotate_point_by_rotate_matrix(point);
         });
 

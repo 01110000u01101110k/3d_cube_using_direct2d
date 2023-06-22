@@ -8,6 +8,7 @@ use crate::math::{
     Rotatin,
     RotationTypes
 };
+use rayon::prelude::*;
 
 #[derive(Clone, Debug)]
 pub struct BuildedCube {
@@ -176,7 +177,6 @@ impl Cube {
         }
 
         let mut builded_cube = self.builded_cube.clone();
-        let mut cube_2d_proection_on_screen: Vec<VectorPoint3D> = Vec::new();
 
         let mut client_window_size = RECT::default();
         unsafe {
@@ -185,9 +185,7 @@ impl Cube {
 
         self.try_to_rotate_shape(&mut builded_cube);
 
-        let mut vectors_with_perspective_projection: Vec<VectorPoint3D> = Vec::new();
-
-        builded_cube.points.iter_mut().for_each(|vector| {
+        let (vectors_with_perspective_projection, cube_2d_proection_on_screen): (Vec<VectorPoint3D>, Vec<VectorPoint3D>) = builded_cube.points.par_iter_mut().map(|vector| {
             // якщо треба обертати фігуру навколо себе, зміщення точок застосовуємо тільки після виклику функції обертання
             match self.rotation.rotation_type {
                 RotationTypes::AroundSelf => {
@@ -197,7 +195,7 @@ impl Cube {
                 },
                 _ => ()
             }
-
+            
             // трансформуємо 3d вектор з урахуванням перспективи
             let vector_with_perspective_projection = perspective_projection(
                 &vector,
@@ -212,9 +210,8 @@ impl Cube {
                 client_window_size.bottom as f32
             );
 
-            vectors_with_perspective_projection.push(vector_with_perspective_projection);
-            cube_2d_proection_on_screen.push(result_vector);
-        });
+            (vector_with_perspective_projection, result_vector)
+        }).collect();
 
         self.to_draw = cube_2d_proection_on_screen;
 
@@ -225,15 +222,14 @@ impl Cube {
             далі формую bool масив, де помічаю які з трикутників потрібно рендерити 
         */
         let triangles: Vec<Triangle> = self.set_cube_as_triangles_from_points(&vectors_with_perspective_projection);
-        let mut is_visible_triangle: Vec<bool> = Vec::new();
         
-        triangles.iter().for_each(|triangle| {
+        let is_visible_triangle: Vec<bool> = triangles.par_iter().map(|triangle| {
             if triangle.find_perpendicular_direction_to_triangle() < 0.0 {
-                is_visible_triangle.push(true);
+                return true;
             } else {
-                is_visible_triangle.push(false);
+                return false;
             }
-        });
+        }).collect();
 
         /* 
             створюю фінальний масив трикутників за допомогою масиву точок "self.to_draw",
@@ -241,15 +237,12 @@ impl Cube {
             беру значення з масиву в якому вказано який з трикутників має бути відрендерений,
             і присвоюю їх фінальному масиву трикутників.
         */
-        let mut draw_as_triangles_index = 0;
         let mut draw_as_triangles = self.set_cube_as_triangles_from_points(&self.to_draw);
 
-        draw_as_triangles.iter_mut().for_each(|triangle| {
-            if triangle.is_visible != is_visible_triangle[draw_as_triangles_index] {
-                triangle.is_visible = is_visible_triangle[draw_as_triangles_index];
+        draw_as_triangles.par_iter_mut().enumerate().for_each(|(index, triangle)| {
+            if triangle.is_visible != is_visible_triangle[index] {
+                triangle.is_visible = is_visible_triangle[index];
             }
-
-            draw_as_triangles_index += 1;
         });
 
         self.draw_as_triangles = draw_as_triangles;

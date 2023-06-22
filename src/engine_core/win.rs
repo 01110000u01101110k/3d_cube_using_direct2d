@@ -4,6 +4,7 @@ use crate::engine_core::{LastPressKey};
 
 use std::time::{Duration, Instant};
 use std::io::{self, Write};
+use rayon::prelude::*;
 
 fn create_white_brush(target: &ID2D1DeviceContext) -> Result<ID2D1SolidColorBrush> {
     let color = D2D1_COLOR_F { r: 1.0, g: 1.0, b: 1.0, a: 1.0 };
@@ -457,11 +458,18 @@ impl Window {
 
                     self.last_press_key.check_keystrokes(&mut self.cubes);
 
-                    self.cubes.iter_mut().for_each(|cube| {
+                    self.cubes.par_iter_mut().for_each(|cube| {
                         cube.build_shape(self.handle);
                     });
 
+                    //writeln!(handle, "update logic time: {} millis", update_time.elapsed().as_millis() as u16);
+
+                    // draw
+                    //let update_time_draw = Instant::now();
+
                     self.render()?;
+
+                    //writeln!(handle, "draw time: {} millis", update_time_draw.elapsed().as_millis() as u16);
 
 
                     // fps
@@ -469,13 +477,11 @@ impl Window {
                     if frame_time_render.len() < 200 {
                         frame_time_render.push(update_time.elapsed().as_millis());
                     } else {
-                        let mut accum = 0;
-
-                        frame_time_render.iter().for_each(|item| accum += item);
+                        let accum: u128 = frame_time_render.par_iter().sum();
                         
-                        let fps: f32 = 1000.0 / (accum as f32 / frame_time_render.len() as f32);
+                        let fps: f64 = 1000.0 / (accum as f64 / frame_time_render.len() as f64);
                         
-                        writeln!(handle, "fps: {}", fps as i32);
+                        writeln!(handle, "fps: {}", fps as u64);
 
                         frame_time_render = Vec::new();
                     }
