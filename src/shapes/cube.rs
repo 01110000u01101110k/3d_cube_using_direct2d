@@ -213,39 +213,41 @@ impl Cube {
             (vector_with_perspective_projection, result_vector)
         }).collect();
 
-        self.to_draw = cube_2d_proection_on_screen;
+        if self.use_triangles_for_build {
+            /* 
+                знаходжу паралелі для трикутників щоб визначити якою стороною повернутий трикутник
+                (для використання формули яку я застосував, спочатку приводимо точки до перспективної проекції,
+                для цього був сформований масив vectors_with_perspective_projection вище в коді, який тут використовую), 
+                далі формую bool масив, де помічаю які з трикутників потрібно рендерити 
+            */
+            let triangles: Vec<Triangle> = self.set_cube_as_triangles_from_points(&vectors_with_perspective_projection);
+            
+            let is_visible_triangle: Vec<bool> = triangles.par_iter().map(|triangle| {
+                if triangle.find_perpendicular_direction_to_triangle() < 0.0 {
+                    return true;
+                } else {
+                    return false;
+                }
+            }).collect();
 
-        /* 
-            знаходжу паралелі для трикутників щоб визначити якою стороною повернутий трикутник
-            (для використання формули яку я застосував, спочатку приводимо точки до перспективної проекції,
-            для цього був сформований масив vectors_with_perspective_projection вище в коді, який тут використовую), 
-            далі формую bool масив, де помічаю які з трикутників потрібно рендерити 
-        */
-        let triangles: Vec<Triangle> = self.set_cube_as_triangles_from_points(&vectors_with_perspective_projection);
-        
-        let is_visible_triangle: Vec<bool> = triangles.par_iter().map(|triangle| {
-            if triangle.find_perpendicular_direction_to_triangle() < 0.0 {
-                return true;
-            } else {
-                return false;
-            }
-        }).collect();
+            /* 
+                створюю фінальний масив трикутників за допомогою масиву точок "self.to_draw",
+                в якому вже застосовано приведення до екранних координат,
+                беру значення з масиву в якому вказано який з трикутників має бути відрендерений,
+                і присвоюю їх фінальному масиву трикутників.
+            */
+            let mut draw_as_triangles = self.set_cube_as_triangles_from_points(&cube_2d_proection_on_screen);
 
-        /* 
-            створюю фінальний масив трикутників за допомогою масиву точок "self.to_draw",
-            в якому вже застосовано приведення до екранних координат,
-            беру значення з масиву в якому вказано який з трикутників має бути відрендерений,
-            і присвоюю їх фінальному масиву трикутників.
-        */
-        let mut draw_as_triangles = self.set_cube_as_triangles_from_points(&self.to_draw);
+            draw_as_triangles.par_iter_mut().enumerate().for_each(|(index, triangle)| {
+                if triangle.is_visible != is_visible_triangle[index] {
+                    triangle.is_visible = is_visible_triangle[index];
+                }
+            });
 
-        draw_as_triangles.par_iter_mut().enumerate().for_each(|(index, triangle)| {
-            if triangle.is_visible != is_visible_triangle[index] {
-                triangle.is_visible = is_visible_triangle[index];
-            }
-        });
-
-        self.draw_as_triangles = draw_as_triangles;
+            self.draw_as_triangles = draw_as_triangles;
+        } else {
+            self.to_draw = cube_2d_proection_on_screen;
+        }
     }
 
     fn build_cube_from_middle_points(&mut self, middle_dot_x: f32, middle_dot_y: f32, middle_dot_z: f32) -> &mut Self {
