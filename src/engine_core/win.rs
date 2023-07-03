@@ -196,7 +196,9 @@ pub struct Window {
     dpi: f32,
     visible: bool,
     occlusion: u32,
-    cubes: Vec<Cube>,
+    process_draw: Option<fn(window: &mut Window)>,
+    process_build_shapes: Option<fn(window: &mut Window)>,
+    pub cubes: Vec<Cube>,
     pub last_press_key: LastPressKey
 }
 
@@ -228,6 +230,8 @@ impl Window {
             dpi,
             visible: false,
             occlusion: 0,
+            process_draw: None,
+            process_build_shapes: None,
             cubes: Vec::new(),
             last_press_key: LastPressKey::new()
         })
@@ -254,12 +258,11 @@ impl Window {
             self.create_device_size_resources()?;
         }
 
-        let target = self.target.as_ref().unwrap();
-        unsafe { target.BeginDraw() };
-        self.draw(target)?;
+        unsafe { self.target.as_ref().unwrap().BeginDraw() };
+        self.draw()?;
 
         unsafe {
-            target.EndDraw(std::ptr::null_mut(), std::ptr::null_mut())?;
+            self.target.as_ref().unwrap().EndDraw(std::ptr::null_mut(), std::ptr::null_mut())?;
         }
 
         if let Err(error) = self.present(1, 0) {
@@ -295,32 +298,34 @@ impl Window {
         unsafe { self.swapchain.as_ref().unwrap().Present(sync, flags).ok() }
     }
 
-    fn draw(&self, target: &ID2D1DeviceContext) -> Result<()> {
-        let draw_space = self.draw_space.as_ref().unwrap();
+    fn draw(&mut self) -> Result<()> {
+        let target = self.target.as_ref().unwrap();
 
         unsafe {
-
             target.Clear(&D2D1_COLOR_F { r: 0.1, g: 0.1, b: 0.1, a: 1.0 });
 
             let mut previous = None;
             target.GetTarget(&mut previous);
-            target.SetTarget(draw_space);
+            target.SetTarget(self.draw_space.as_ref().unwrap());
             target.Clear(std::ptr::null());
 
             self.draw_elements()?;
+
+            let target = self.target.as_ref().unwrap(); // створення ще однієї змінної target та отримання посилання self.target.as_ref().unwrap() тут необхідно, бо в середині self.draw_elements() данні &mut self є мутабельними, старе посилання на змінну target наскільки я розумію після виклику self.draw_elements() вже не актуальне (можливо тому що компілятор не знає, змінилися ці данні і посилання на них, чи ні), тому доводиться створювати нову змінну з цим посиланням
 
             target.SetTarget(previous.as_ref());
             /*target.SetTransform(&Matrix3x2::translation(5.0, 5.0));
 
             target.SetTransform(&Matrix3x2::identity());*/
 
-            target.DrawImage(draw_space, std::ptr::null(), std::ptr::null(), D2D1_INTERPOLATION_MODE_LINEAR, D2D1_COMPOSITE_MODE_SOURCE_OVER);
+            target.DrawImage(self.draw_space.as_ref().unwrap(), std::ptr::null(), std::ptr::null(), D2D1_INTERPOLATION_MODE_LINEAR, D2D1_COMPOSITE_MODE_SOURCE_OVER);
         }
 
         Ok(())
     }
 
-    fn draw_elements(&self) -> Result<()> {
+    fn draw_elements(&mut self) -> Result<()> {
+        /*
         self.cubes.iter().for_each(|cube| {
             if cube.use_triangles_for_build {
                 cube.draw_cube_from_triangles(&self);
@@ -329,6 +334,13 @@ impl Window {
             }
             
         });
+        */
+        match self.process_draw {
+            Some(run) => {
+                run(self)
+            },
+            None => {}
+        }
         
         Ok(())
     }
@@ -416,7 +428,7 @@ impl Window {
         }
     }
 
-    pub fn run(&mut self, cubes: Vec<Cube>) -> Result<()> {
+    pub fn run(&mut self, process_build_shapes: fn(window: &mut Window), process_draw: fn(window: &mut Window), cubes: Vec<Cube>) -> Result<()> {
         unsafe {
             let instance = GetModuleHandleA(None)?;
             debug_assert!(instance.0 != 0);
@@ -441,8 +453,9 @@ impl Window {
             debug_assert!(handle == self.handle);
             let mut message = MSG::default();
 
-            // add cubes
             self.cubes = cubes;
+            self.process_draw = Some(process_draw);
+            self.process_build_shapes = Some(process_build_shapes);
 
             let stdout = io::stdout();
 
@@ -458,9 +471,12 @@ impl Window {
 
                     self.last_press_key.check_keystrokes(&mut self.cubes);
 
-                    self.cubes.par_iter_mut().for_each(|cube| {
-                        cube.build_shape(self.handle);
-                    });
+                    match self.process_build_shapes {
+                        Some(run) => {
+                            run(self)
+                        },
+                        None => {}
+                    }
 
                     //writeln!(handle, "update logic time: {} millis", update_time.elapsed().as_millis() as u16);
 

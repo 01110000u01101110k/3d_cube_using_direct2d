@@ -1,3 +1,5 @@
+// #![windows_subsystem = "windows"] // цей атрибут використовується щоб вимкнути консоль програми, яка зазвичай з'являється разом із вікном, більше інформації можна отримати тут: https://rust-lang.github.io/rfcs/1665-windows-subsystem.html
+
 use spinning_cube::engine_core::{Engine};
 use spinning_cube::shapes::{Cube, BuildedCube};
 use spinning_cube::math::{
