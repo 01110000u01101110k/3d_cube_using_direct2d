@@ -9,7 +9,7 @@ pub fn process_build_shapes(window: &mut Window) {
     });
 }
 
-pub fn process_draw(window: &mut Window) {
+pub fn process_draw(window: &Window) {
     window.cubes.iter().for_each(|cube| {
         if cube.use_triangles_for_build {
             cube.draw_cube_from_triangles(window);

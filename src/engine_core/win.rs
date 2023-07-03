@@ -196,7 +196,7 @@ pub struct Window {
     dpi: f32,
     visible: bool,
     occlusion: u32,
-    process_draw: Option<fn(window: &mut Window)>,
+    process_draw: Option<fn(window: &Window)>,
     process_build_shapes: Option<fn(window: &mut Window)>,
     pub cubes: Vec<Cube>,
     pub last_press_key: LastPressKey
@@ -428,7 +428,7 @@ impl Window {
         }
     }
 
-    pub fn run(&mut self, process_build_shapes: fn(window: &mut Window), process_draw: fn(window: &mut Window), cubes: Vec<Cube>) -> Result<()> {
+    pub fn run(&mut self, process_build_shapes: fn(window: &mut Window), process_draw: fn(window: &Window), cubes: Vec<Cube>) -> Result<()> {
         unsafe {
             let instance = GetModuleHandleA(None)?;
             debug_assert!(instance.0 != 0);
