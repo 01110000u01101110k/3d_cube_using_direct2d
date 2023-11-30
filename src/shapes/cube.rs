@@ -13,6 +13,7 @@ use rayon::prelude::*;
 #[derive(Clone, Debug)]
 pub struct BuildedCube {
     pub points: Vec<VectorPoint3D>,
+    pub indices: Vec<u16>,
     pub is_builded: bool
 }
 
@@ -29,8 +30,24 @@ impl BuildedCube {
             VectorPoint3D::new(),
         ];
 
+        let indices = vec![
+            0,1,2,
+            3,2,1,
+            6,5,4,
+            5,6,7,
+            4,1,0,
+            1,4,5,
+            2,3,6,
+            7,6,3,
+            0,2,4,
+            6,4,2,
+            5,3,1,
+            3,5,7,
+        ]; // розташовую точки куба таким чином, щоб потрібні трикутники були повернуті обличчям до камери, а інші відвернуті
+
         Self {
             points,
+            indices,
             is_builded: false
         }
     }
@@ -94,73 +111,23 @@ impl Cube {
     }
 
     pub fn set_cube_as_triangles_from_points(&self, points: &Vec<VectorPoint3D>) -> Vec<Triangle> {
-        // розташовую трикутники правильним чином, щоб потрібні трикутники були повернуті обличчям до камери
-        let draw_as_triangles: Vec<Triangle> = vec![
-            Triangle::new().set_triangle( // front side triangles
-                points[0].clone(),
-                points[1].clone(),
-                points[2].clone()
-            ),
-            Triangle::new().set_triangle( // front side triangles
-                points[3].clone(),
-                points[2].clone(),
-                points[1].clone(),
-            ),
-            Triangle::new().set_triangle( // back side triangles
-                points[6].clone(),
-                points[5].clone(),
-                points[4].clone(),
-            ),
-            Triangle::new().set_triangle( // back side triangles
-                points[5].clone(),
-                points[6].clone(),
-                points[7].clone(),
-            ),
-            Triangle::new().set_triangle( // top side triangles
-                points[4].clone(),
-                points[1].clone(),
-                points[0].clone(),
-            ),
-            Triangle::new().set_triangle( // top side triangles
-                points[1].clone(),
-                points[4].clone(),
-                points[5].clone(),
-            ),
-            Triangle::new().set_triangle( // down side triangles
-                points[2].clone(),
-                points[3].clone(),
-                points[6].clone(),
-            ),
-            Triangle::new().set_triangle( // down side triangles
-                points[7].clone(),
-                points[6].clone(),
-                points[3].clone(),
-            ),
-            Triangle::new().set_triangle( // left side triangles
-                points[0].clone(),
-                points[2].clone(),
-                points[4].clone(),
-            ),
-            Triangle::new().set_triangle( // left side triangles
-                points[6].clone(),
-                points[4].clone(),
-                points[2].clone(),
-            ),
-            Triangle::new().set_triangle( // right side triangles
-                points[5].clone(),
-                points[3].clone(),
-                points[1].clone(),
-            ),
-            Triangle::new().set_triangle( // right side triangles
-                points[3].clone(),
-                points[5].clone(),
-                points[7].clone(),
-            ),
-        ];
+        let mut draw_as_triangles: Vec<Triangle> = Vec::new();
+
+        let mut index = 0;
+
+        while index < self.builded_cube.indices.len() {
+            draw_as_triangles.push(
+                Triangle::new().set_triangle(
+                    points[self.builded_cube.indices[index] as usize].clone(),
+                    points[self.builded_cube.indices[(index + 1) as usize] as usize].clone(),
+                    points[self.builded_cube.indices[(index + 2) as usize] as usize].clone()
+                )
+            );
+
+            index += 3;
+        }
 
         draw_as_triangles
-
-        //println!("{:?}", &self.draw_as_triangles);
     }
 
     pub fn build_shape(&mut self, hwnd: HWND) {

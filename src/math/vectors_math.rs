@@ -7,7 +7,7 @@ pub fn perspective_projection(
 ) -> VectorPoint3D {
     let mut new_vector = VectorPoint3D::new();
 
-    let deph = screen_height / (screen_height + vector_3d.z);
+    let deph = screen_width / (screen_width + vector_3d.z);
 
     new_vector.x = vector_3d.x * deph;
     new_vector.y = vector_3d.y * deph;
