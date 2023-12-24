@@ -4,7 +4,7 @@ use crate::shapes::{Cube, Shape};
 use rayon::prelude::*;
 
 pub fn process_build_shapes(window: &mut Window) {
-    window.cubes.iter_mut().for_each(|cube| {
+    window.cubes.par_iter_mut().for_each(|cube| {
         cube.build_shape(window.handle);
     });
 }
