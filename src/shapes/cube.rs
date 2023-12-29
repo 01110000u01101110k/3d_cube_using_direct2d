@@ -480,7 +480,7 @@ impl Cube {
                 triangle.fill_triangle_color(window, colors[color_num]);
 
                 counter += 0.5;
-                if counter == 1.0 || counter == 2.0 || counter == 3.0 || counter == 4.0 || counter == 5.0 || counter == 6.0 {
+                if counter.trunc() == counter {
                     color_num += 1;
                 }
             });
